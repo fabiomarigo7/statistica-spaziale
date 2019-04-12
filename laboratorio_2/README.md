@@ -1,12 +1,3 @@
----
-title: "Laboratorio 2"
-output: 
-  html_document:
-    keep_md: true
----
-
-
-
 ## Lettura, preparazione ed esplorazione "non spaziale" dei dati
 
 
