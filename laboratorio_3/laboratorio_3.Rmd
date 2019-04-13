@@ -1,0 +1,469 @@
+---
+title: "Laboratorio 3"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+require(geoR)
+dat.om<-soja98
+str(dat.om) 		# numero di osservazioni e variabili 
+summary(dat.om)	# descrittive per ogni variabile nel data set
+d1<-obj <- dat.om[,c("X","Y","MO")];	summary(obj)
+```
+
+La variabile MO ha un campo di variazione limitato, con moda e mediana vicini, si può supporre simmetria e non sembrano esserci outliers.
+
+Preparazione dati per GeoR:
+
+```{r}
+dat.om.geo <- as.geodata(obj,coords.col=1:2,data.col=3)		# converte oggetto in classe geodata
+plot(dat.om.geo)
+```
+
+Risulta una tendenza da sud a nord che aumenta la concentrazione. Potrebbe esserci componente di larga scala, anisotropia.
+
+## Analisi variabilità di piccola scala
+
+**Nuvola del variogramma**
+
+```{r}
+plot(variog(dat.om.geo, estimator.type="classical",option="cloud"),cex=0.4)
+```
+
+In ascissa stiamo plottando le distanze, in ordinata la differenza tra le Y. 
+
+Non ci dà particolari informazioni, vediamo solo che cresce un po' aumentando la distanza. Potrebbe quindi esserci un trend.
+
+**Variogramma empirico**
+
+```{r}
+dat.om.var <- variog(dat.om.geo,	estimator.type="classical", uvec=14)
+plot(dat.om.var)
+```
+
+Rimuovendo l'opzione cloud, variog non calcola la nuvola, ma produce il variogramma empirico. Calcola delle bande di confidenza e plotta nelle ascisse i punti centrali delle classi e ordinate le medie delle differenze al quadrato. 
+
+
+
+
+## Stima del variogramma
+
+estimator.type = classical --> variogramma empirico;
+
+estimator.type = modulus --> variogramma robusto;
+
+```{r}
+dat.om.var.robust <- variog(dat.om.geo, estimator.type="modulus",uvec=14)
+plot(dat.om.var,main="variogramma empirico",ylim=c(0,110));	
+plot(dat.om.var.robust,main="variogramma robusto",ylim=c(0,110))
+```
+
+I due output sono pressoché identici nel lato che ci interessa poiché non ci sono outlier evidenti.
+
+Lisciamento kernel del variogramma:
+
+```{r}
+vario.s <- variog(dat.om.geo, op="sm", band=sd(dat.om.var$u)) 
+plot(vario.s,type="l",ylim=c(0,110))
+points(dat.om.var$u, dat.om.var$v, col=2)	# aggiunge variogramma empirico al plot
+```
+
+Ottengo un'operazione di lisciamento migliore, meno brutale rispetto a prima, ma le informazioni che ci vengono fornite sono molto simili.
+
+Sarebbe stato meglio farlo con le sd di tutte le distanze tra tutti i punti
+
+```{r}
+a <- variog(dat.om.geo, estimator.type="classical",option="cloud")
+vario.a <- variog(dat.om.geo, op="sm", band=sd(a$u))
+par(mfrow=c(1,1))
+plot(vario.a, type="l", ylim=c(0,80))
+```
+
+Posso pensare che la soglia del variogramma sia circa 45, mentre il range potrebbe essere in corrispondenza della distanza 100.
+
+Il nugget posso ipotizzare sia intorno a 20: il fenomeno risulta essere non molto disturbato dal rumore, infatti quasi la metà della variabilità (20/40) è dovuta al white noise, ovvero la componente di errore.
+
+**Variogrammi direzionali**
+
+Come usare variog per variogrammi direzionali: 1) oggetto geodata 2) specifichiamo la direzione verso la quale vogliamo calcolare il variogramma empirico, ovvero l'angolo azimutale 3) tolleranza angolare
+
+Scegliendo pi/8 come tolleranza impongo che ogni coppia entri in un solo variogramma direzionale.
+
+```{r}
+vario.0  <- variog(dat.om.geo,  dir=0,    tol=pi/8)   # sud nord 
+vario.45 <- variog(dat.om.geo,  dir=pi/4, tol=pi/8)   # sud ovest / nord est
+vario.90 <- variog(dat.om.geo,  dir=pi/2, tol=pi/8)   # est ovest
+vario.135 <- variog(dat.om.geo, dir=pi*3/4, tol=pi/8) # sud est / nord ovest 
+
+plot(c(0,180),c(0,100),type="n",xlab="distanza",ylab="semivarianza")#,type="p"
+lines(dat.om.var)
+lines(vario.0 , col=2,lty=2)
+lines(vario.45, col=3,lty=3)
+lines(vario.90, col=4,lty=4)
+lines(vario.135,col=5,lty=5)
+legend("topleft", cex=0.8, 
+        legend=c("omnidirectional", expression(0 * degree), 
+				expression(45 * degree), expression(90 * degree), 
+				expression(135 * degree)), lty=c(1:5),col=1:5)
+```
+
+Le stime nei variogrammi sono molto più variabili, in quanto la numerosità è molto più bassa.
+
+Tutti i variog direzionali tranne quello blu, presentano una crescita con l'aumentare della distanza.
+
+Questo vuol dire che molto probabilmente sussiste un trend, di direzione nord sud (come si era visto sopra in un altro grafico).
+
+Il variog rosso decresce. Questo può essere dato da una numerosità molto bassa negli ultimi bin. 
+
+Per vedere il processo al netto del trend si può osservare il variogramma direzionale est-overt (ortogonale al trend!).
+
+Un modo per trattare il trend è il seguente: 
+
+* stimo componente di larga scala OLS (polinomio max 3° grado)
+* tolgo componente di larga scala
+* stimo variogramma empirico sui residui della regressione senza larga scala
+
+**Stima variogramma con trend**
+
+```{r}
+dat.om.var.notr <- variog(dat.om.geo,trend ="1st", estimator.type="classical", uvec=14)	
+plot(dat.om.var.notr)
+```
+
+Detrend fatto a mano:
+
+```{r}
+plot(variog(
+		as.geodata(obj=data.frame(obj[,1:2],res=residuals(lm(obj$MO~obj$Y))),
+		coords.col=1:2,data.col=3),uvec=14
+		),ylim=c(0,60))
+```
+
+`res=residuals(lm(obj$MO~obj$Y)))` --> dati su cui faccio il variogramma, prendo i residui di una regressione lineare in direzione Y, l'unica dove ho visto esserci un trend.
+
+`obj[,1,2]` --> prendo le prime due colonne, le coordinate, e ci aggiungo `res`, che è la variabile risposta del variog.
+
+**Esercizio** Detrendizzare manualmente i dati con un trend di primo grado in X e Y e costruire il variog dei residui 
+
+```{r}
+plot(variog(as.geodata(obj=data.frame(obj[,1:2],res=residuals(lm(obj$MO~obj$Y+obj$X))),
+                       coords.col=1:2,data.col=3), uvec=20),ylim=c(0,60))
+```
+
+Detrendizzando rispetto a tutte e due le coordinate viene uguale perché X non è significativa:
+
+```{r}
+summary(lm(obj$MO~obj$Y+obj$X))
+```
+
+Sussiste infatti anisotropia e un trend verticale in Y.
+
+Direzionali detrendizzati:
+
+```{r}
+ date.om.geo.det = as.geodata(obj=data.frame(obj[,1:2],res=residuals(lm(obj$MO~obj$Y+obj$X))))
+  vario.0  <- variog(date.om.geo.det,  dir=0,    tol=pi/8) ##var empirico in direzione sud nord
+  vario.45 <- variog(date.om.geo.det,  dir=pi/4, tol=pi/8) #sud ovest --> nord est
+  vario.90 <- variog(date.om.geo.det,  dir=pi/2, tol=pi/8)
+  vario.135 <- variog(date.om.geo.det, dir=pi*3/4, tol=pi/8)
+  dat.om.var.det <- variog(date.om.geo.det,	estimator.type="classical", uvec=14)
+  
+plot(c(0,180),c(0,100),type="n",xlab="distanza",ylab="semivarianza", 
+       main="Variogrammi dei residui")#,type="p"
+  lines(dat.om.var.det) #omnidir
+  lines(vario.0 , col=2,lty=2)
+  lines(vario.45, col=3,lty=3)
+  lines(vario.90, col=4,lty=4)
+  lines(vario.135,col=5,lty=5)
+  legend("topleft", cex=0.8, 
+         legend=c("omnidirectional", expression(0 * degree), 
+                  expression(45 * degree), expression(90 * degree), 
+                  expression(135 * degree)), lty=c(1:5),col=1:5)
+```
+
+
+## Stima parametrica del variogramma tramite LS
+
+setto la massima distanza pari a 150 per togliere distanze poco significative
+
+```{r}
+max.dist <- 150
+dat.om.var <- variog(dat.om.geo, estimator.type="classical",max.dist=max.dist)	# variogramma empirico
+```
+
+Sovrapponiamo un modello  teorico al variog empirico
+
+```{r}
+plot(dat.om.var, main="valutazione visiva variogrammi", ylim=c(0,60))
+lines.variomodel(cov.model = "exp", cov.pars = c(25,35), nug =20,  
+          max.dist=max.dist,col=2,lty=2)
+abline(h=45)
+```
+
+0.95*soglia = secondo elemento di cov.pars perchè la soglia è un asintoto orizzontale, in questo caso il range
+
+NB: io specifico come primo parametro di cov.pars la soglia parziale. quindi soglia effettiva = parziale + nugget = 45
+
+Un modello di questo tipo interpola ragionevolmente bene il variogramma empirico, il quale sembra essere una stima attendibile del variog teorico.
+
+**Esercizio**. Aggiungere al grafico precedente il variog esponenziale con soglia 35 e 45. Replicare l'esercizio con funzioni di variogramma diverse: sferico e wave
+
+```{r}
+plot(dat.om.var, main="valutazione visiva variogrammi", ylim=c(0,60))
+lines.variomodel(cov.model = "exp", cov.pars = c(25,35), nug =20,  
+          max.dist=max.dist,col=2,lty=2)
+abline(h=45)
+
+lines.variomodel(cov.model = "exp", cov.pars = c(35,45), nug =20,  ##con cov.model, gli dico quale variogramma
+	                   #voglio implementare
+	                   max.dist=max.dist,col=3,lty=3) 
+lines.variomodel(cov.model = "wave", cov.pars = c(25,35), nug =20,  
+                 max.dist=max.dist,col=4,lty=4)
+lines.variomodel(cov.model = "spherical", cov.pars = c(25,35), nug =20,  
+                 max.dist=max.dist,col=5,lty=5)
+legend("bottomright", cex=0.8, 
+       legend=c("variogramma empirico", "variogramma teorico exp 1",
+                "variogramma teorico exp 2", "var wave", "var sferico"), lty=c(1:5),col=1:5)
+```
+
+
+### Metodo WLS
+
+Funzione variofit: richiede 1) variogramma empirico 2) valori di inizializzazione per LS 3) `fix.nugget` = False
+
+```{r}
+dat.om.var.fit <- variofit(dat.om.var,ini.cov.pars=c(25,35),
+		    cov.model="exponential", fix.nugget=FALSE, nugget=20)
+summary(dat.om.var.fit)
+```
+
+`spatial.component` = stime per soglia parziale e range
+
+`nugget.component` = stima per il nugget
+
+`practicalRange` = stima del range quando la soglia è asintotica = 0.95*soglia
+
+```{r}
+dat.om.var.fit$cov.pars  # stima di  soglia parziale e range 
+dat.om.var.fit$nugget    # stima del nugget
+dat.om.var.fit$value     # somma dei quadrati
+```
+
+
+Confronto grafico tra i variogrammi parametrici stimati e il variogramma empirico 
+
+Effetto ponderazione e massima distanza
+
+1) Variogramma empirico
+
+```{r}
+dat.om.var <- variog(dat.om.geo, estimator.type="classical")	     # variogramma empirico
+plot(dat.om.var)
+```
+
+2) OLS
+
+```{r}
+dat.om.var.fit.ols <- variofit(dat.om.var,
+	  	ini.cov.pars=c(25,35),
+		  cov.model="exponential", fix.nugget=FALSE,nugget=20,weights = "equal" )
+  ##se metto weights=equal---> WLS collassa a OLS
+plot(dat.om.var)
+lines(dat.om.var.fit.ols,col=2, lty=2, lwd=2)
+```
+
+3) WLS con npairs come peso
+
+```{r}
+dat.om.var.fit.wls <- variofit(dat.om.var,
+	  	ini.cov.pars=c(25,35),
+		  cov.model="exponential", fix.nugget=FALSE,nugget=20)
+plot(dat.om.var)
+lines(dat.om.var.fit.wls,col=3, lty=3, lwd=3)
+```
+
+4) OLS con max.dist = 150
+
+```{r}
+dat.om.var.fit.ols.MD<- variofit(dat.om.var, ini.cov.pars=c(25,35), 
+	  		cov.model="exponential", fix.nugget=FALSE,nugget=20, 
+		  	weights="equal", max.dist=max.dist)
+plot(dat.om.var)
+lines(dat.om.var.fit.ols.MD,col=4, lty=4, lwd=2)
+```
+
+5) OLS con max.dist = 150
+
+```{r}
+dat.om.var.fit.wls.MD<- variofit(dat.om.var, ini.cov.pars=c(25,35), 
+			cov.model="exponential", fix.nugget=FALSE,nugget=20, 
+			max.dist=max.dist)
+plot(dat.om.var)
+lines(dat.om.var.fit.wls.MD,col=5, lty=5,lwd=3)
+```
+
+Tutto in uno:
+
+```{r}
+plot(dat.om.var)
+lines(dat.om.var.fit.ols,col=2, lty=2, lwd=2)
+lines(dat.om.var.fit.wls,col=3, lty=3, lwd=3)
+lines(dat.om.var.fit.ols.MD,col=4, lty=4, lwd=2)
+lines(dat.om.var.fit.wls.MD,col=5, lty=5,lwd=3)
+legend(15,20,c("variogramma empirico",
+				"variogramma ols - modello esponenziale",
+				"variogramma wls - modello esponenziale",
+				paste("variogramma ols - modello esponenziale max dist=",
+				max.dist,sep=""),
+				paste("variogramma wls - modello esponenziale max dist=",
+				max.dist,sep="")),
+				lty=1:5, col=1:5,cex=0.9,bty="n")
+```
+
+Confronto tra modelli:
+
+```{r}
+round(rbind(
+  	wls.maxdist150=summary(dat.om.var.fit.wls.MD)$estimated.pars,
+	  ols.maxdist150=summary(dat.om.var.fit.ols.MD)$estimated.pars,
+	  wls.maxdist=summary(dat.om.var.fit.wls)$estimated.pars,
+	  ols.maxdist=summary(dat.om.var.fit.ols)$estimated.pars
+	),1)
+```
+
+
+Stima modello sferico:
+
+```{r}
+dat.om.var.fit.sphe.ols <- variofit(dat.om.var,ini.cov.pars=c(35,70),
+	  	cov.model="spherical", fix.nugget=FALSE, nugget=10, weights = "equal",
+		  max.dist=max.dist)
+plot(dat.om.var)
+lines(dat.om.var.fit.sphe.ols,lwd=2)
+```
+
+Confronto tra modelli:
+
+```{r}
+round(
+	  rbind(
+		  modello.sferico=c(summary(dat.om.var.fit.sphe.ols)$estimated.pars,
+		     range.effettivo=summary(dat.om.var.fit.sphe.ols)$practicalRange,
+	  	   SumSquares=summary(dat.om.var.fit.sphe.ols)$sum.of.squares)
+		  ,
+		  modello.esponenziale=c(summary(dat.om.var.fit.ols.MD)$estimated.pars,
+		     range.effettivo=summary(dat.om.var.fit.ols.MD)$practicalRange,
+		     SumSquares=summary(dat.om.var.fit.ols.MD)$sum.of.squares)
+	   ),
+	  digits=1)
+```
+
+
+**Esercizio** riportare su uno stesso grafico i due variogrammi, sferico ed esponenziale stimati tramite ols insieme al variogramma empirico
+
+```{r}
+plot(dat.om.var)
+	lines(dat.om.var.fit.sphe.ols,lwd=2, lty=2, col=2)
+	lines(dat.om.var.fit.ols.MD,lwd=2, lty=3, col=3)
+	legend("bottomright",c("variogramma empirico","variogramma sferico","variogramma esponenziale"),
+	       col=c(1:3),lty=c(1:3))
+```
+
+## Stima parametrica del variogramma tramite ML
+
+```{r}
+dat.om.lik.fit <- likfit(dat.om.geo,ini.cov.pars=c(35,46),
+		cov.model="exponential",trend="cte", fix.nugget=FALSE,nugget=20,
+		nospatial=FALSE,messages=T)
+print(dat.om.lik.fit)
+summary(dat.om.lik.fit)
+plot(dat.om.var)
+lines(dat.om.var.fit,col=2, lty=2)		# aggiunge plot stime WLS
+lines(dat.om.lik.fit,col=5, lty=3)    # aggiunge plot stime ML
+legend("bottomright",c("variogramma empirico","variogramma WLS","variogramma ML"),
+col=c(1:3),lty=c(1:3))
+```
+
+
+## Valutazione della variabilità del variogramma tramite MonteCarlo e test grafici via permutazione
+
+Idea: si simulano campioni da traettorie di struttura nota, fissando i parametri del variog ai valori stimati (wls) e si calcolano i variog empirici su dati simulati
+
+Via WLS:
+
+```{r}
+alpha=dat.om.var.fit.wls$nugget		      # nugget
+phi<-dat.om.var.fit.wls$cov.par[2]	    # range
+C0=dat.om.var.fit.wls$cov.par[1]+alpha	# soglia
+```
+
+Esempio con 4 simulazioni:
+
+```{r}
+set.seed(123)
+n<-200		#### numero siti di "rilevazione"
+m<-grf(n=n, cov.pars=dat.om.var.fit.wls$cov.par,nsim=4,nugget=alpha,xlim=c(0,150),ylim=c(0,115))
+
+
+par(mfrow=c(2,2))
+for(i in 1:4){
+  # ###- nuovo "campione" con autocorrelazione data
+	  dat3<-data.frame(m$coords,z=m$data[,i])		       
+	  dat3.geo <- as.geodata(dat3,coords.col=1:2,data.col=3) # converte oggetto in classe geodata
+	  dat3.z.vario <- variog(dat3.geo, estimator.type="classical")
+	  plot(dat3.z.vario)
+	  lines.variomodel(cov.model = "exp", cov.pars = c(C0-alpha,phi), nug =alpha,
+		  max.dist=max.dist ,col=2,lty=2)  # parametrizzazioe del covariogramma come richiesto da geoR
+    }
+```
+
+valutazione della variabilità del variogramma
+
+```{r}
+par(mfrow=c(1,1))
+dat.om.env.mod <- variog.model.env(dat.om.geo, 
+					obj.v = dat.om.var, model.pars =dat.om.var.fit)	#simulazione da modello
+plot(dat.om.var, env =dat.om.env.mod )
+lines(dat.om.var.fit,col=2, lty=2)
+```
+
+valutazione della correlazione spaziale - test grafico via permutazione
+
+```{r}
+dat.om.env <- variog.mc.env(dat.om.geo, obj.var = dat.om.var,save.sim=T)	
+  plot(dat.om.var, envelope = dat.om.env)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
