@@ -1,0 +1,317 @@
+---
+title: "Laboratorio 4"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Lettura dati:
+
+```{r}
+require(geoR)			# carica il pacchetto geoR
+dat.om<-soja98; str(dat.om)
+obj <- dat.om[,c("X","Y","MO")]
+summary(obj)
+attach(obj)
+```
+
+Variogramma empirico:
+
+```{r}
+soja.geo <- as.geodata(obj,coords.col=1:2,data.col=3)
+soja.var <- variog(soja.geo, estimator.type="classical")
+plot(soja.var, main="variogramma empirico", type="o")
+```
+
+Stima variogramma con WLS:
+
+```{r}
+soja.var.fit <-variofit(soja.var,ini.cov.pars=c(25,35),weights="cressie",
+		cov.model="exponential", fix.nugget=FALSE,nugget=20)
+plot(soja.var, type="o")
+lines(soja.var.fit)
+a<-soja.var.fit$cov.pars
+```
+
+Preparazione griglia di previsione:
+
+```{r}
+ size=30
+#seq tra min e max delle ordinate:
+#creo un grigliato che copre esattamente il campo di variazione
+YY<-round(seq(ceiling(min(Y)),floor(max(Y)), length=size),2)
+XX<-round(seq(ceiling(min(X)),floor(max(X)), length=size),2)
+griglia<-expand.grid(X=XX,Y=YY)
+dim(griglia) #ordinate e ascisse dei 900 quadrati della griglia 30x30
+plot(griglia)
+```
+
+non avendo uno shape, dobbiamo creare noi lo spazio in cui ci sono info
+
+
+## Previsione con kriging ordinario
+
+applichiamo il kriging ad ogni punto di questa griglia, per ogni punto calcoliamo la previsione come combinazione lineare di tutti i punti campionari; per 900 volte calcoliamo inversa matrice Gamma e vettore gamma
+
+```{r}
+krg.or <- krige.conv(geodata=soja.geo, 
+	      		  loc=griglia,
+			        krige=krige.control(cov.pars=a,
+				              cov.model="exponential",
+				              nugget=soja.var.fit$nugget))
+```
+
+`geodata` = dati, `loc` = locazioni delle previsioni (griglia), `krige` = struttura di correlazione costruita preliminarmente, `krige.control` = stime soglia parziale e range salvate in `a`, `cov.model` = esponenziale, `nugget` = stima nugget con WLS.
+
+```{r}
+names(krg.or)
+```
+
+Rappresentazione grafica della previsione:
+
+```{r}
+par(cex=0.8)
+
+# primo grafico
+image(krg.or,xlim=c(-15,floor(max(X))),ylim=c(0,120)) 
+legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.or$predict,
+		    vert=TRUE, off=0.7, cex=0.9, scale.vals=pretty(krg.or$predict)
+		    )
+# curve di livello
+contour(krg.or,add=T,coords.data=soja.geo$coords,cex=0.3)
+
+# secondo grafico - 3d (persp)
+persp(krg.or,xlab="longitudine",ylab="latitudine",zlab="log-catch",ticktype="detailed")
+```
+
+In questi due grafici ho rappresentato la previsione con sfumature di colore / con un grafico 3d.
+
+```{r}
+# terzo grafico
+image(krg.or, val=sqrt(krg.or$krige.var), main="kriging std. errors",
+		xlim=c(min(X),floor(max(X))))
+legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.or$krige.var,
+		vert=TRUE, off=0.7, cex=0.9, scale.vals=pretty(krg.or$krige.var)
+	)
+```
+
+Nel terzo grafico sto plottando la componente `krige.var` = varianze del kriging. mappa liscia, errore di previsione molto basso; i siti di previsione coprono in modo abbastanza omogeneo la superficie da prevedere. dato che è un previsore esatto non c'è errore di previsione se prevedo sul sito di campionamento; il grigliato di previsione molto simile ai punti campionari. non ci sono zone distanti dai punti campionati in cui avremmo errore più alto.
+
+```{r}
+# quarto grafico
+points.geodata(soja.geo,pt.divide="data.proportional")
+```
+
+rappresentazione dei punti campionari usati per la stima, sono più grandi quanto più alto è il valore rilevato lì. possiamo vedere se è coerente con le previsioni fatte sulla base di quelle osservazioni.
+
+## Kriging universale
+
+si detrendizza e in un secondo momento si stima il variogramma;
+
+Variogramma empirico su dati detrendizzati da geor
+
+```{r}
+obj.var.u <- variog(soja.geo, estimator.type="classical",trend="2nd")		
+```
+
+stima regressione, calcola $\hat{y}$, calcola residui e calcola  variogramma su di essi
+
+```{r}
+obj.var.fit.u <- variofit(obj.var.u,
+	  ini.cov.pars=c(10,40),	cov.model="exponential", fix.nugget=FALSE,nugget=15)
+plot(obj.var.u)
+  lines(obj.var.fit.u)
+```
+
+kriging universale (uk)
+
+```{r}
+krg.uk <- krige.conv(geodata=soja.geo, 
+        		loc=griglia,
+        		krige=krige.control(type.krige = "ok",#universale ma si deve mettere ok
+                            		trend.d="2nd",
+                            		trend.l="2nd",
+                            		cov.pars=obj.var.fit.u$cov.pars,
+                            		nugget=obj.var.fit.u$nugget,
+                            		cov.model="exponential"
+        		))
+```
+
+`trend.d` e `trend.l` specificano il trend che vogliamo usare nel ku; polinomio di secondo grado completo di latitudine e longitudine
+
+**Previsione**:
+
+modello con fz delle medie polinomio di secondo ordine - il resto è uguale al kriging ordinario
+
+Rappresentazione grafica della previsione
+
+```{r}
+par(cex=0.8)
+image(krg.uk, main="kriging universale",xlim=c(-15,floor(max(X))),ylim=c(0,120))
+legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.uk$predict,
+  vert=TRUE, off=0.7, cex=0.9, scale.vals=pretty(krg.uk$predict)
+  )
+contour(krg.uk,add=T)
+points.geodata(soja.geo,pt.divide="quintiles", col=1:5,add.to.plot=T)
+persp(krg.uk,xlab="X",ylab="Y",zlab="log-catch",ticktype="detailed")
+image(krg.uk, val=sqrt(krg.uk$krige.var), main="kriging std. errors",
+	xlim=c(-15,floor(max(X))),ylim=c(0,120));	
+contour(krg.uk,add=T)
+legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.uk$krige.var,
+  vert=TRUE, off=0.7, cex=0.9, scale.vals=pretty(krg.uk$krige.var)
+)
+points.geodata(soja.geo,pt.divide="data.proportional")
+```
+
+stima della media
+  
+```{r}
+krg.uk$beta		
+krg.or$beta
+```
+
+due componenti beta. stime dei parmemtri della media per quello ordinario e per quello universale (stima con trend polinomiale ha 6 coeff perchè è di secondo grado)
+
+
+## Cross validazione via kriging ordinario
+
+```{r}
+date()	#--- ora inizio elaborazione
+#funzione che implementa da sola la cross validazione
+#non prevediamo con variogramma ma su di esso si basa la previsione krig 
+#quindi se variogramma fa schifo previsione fa schifo
+xvalid.notrend<-xvalid(soja.geo, coords = soja.geo$coords, data = soja.geo$data,
+      model=soja.var.fit)
+#lista di tante componenti
+date()	#--- ora fine elaborazione
+```
+
+**Grafici**
+
+```{r}
+hist(xvalid.notrend$error,main="istogramma residui",xlab="residui")
+```
+
+error residui di cross validazione centrati su 0
+
+
+```{r}
+plot(xvalid.notrend$data,xvalid.notrend$predicted,ylab="previsione",xlab="osservazioni")
+```
+
+i dati disponibili verso le osservazioni previste sui siti campionari + correlazione tra osservati e previsti e ci fa piacere
+
+```{r}
+plot(xvalid.notrend$predicted,xvalid.notrend$error,ylab="residui",xlab="previsione")
+```
+
+valori previsti vs errori, sparpagliato, ci piace perche non c'e andamento diverso a seconda della risposta, no eteroschedasticità
+
+```{r}
+plot(xvalid.notrend$data,xvalid.notrend$error,ylab="residui",xlab="osservazioni")
+```
+
+residui vs osservazioni, ci aspetteremmo che i residui siano belli sparpagliati, indipendentemente da ciò che osservo l'errore è casuale, kriging invece sottostima valori all'estremo inferiore e sovrastima valori piccoli; non ci sorprende perchè la var del kriging comprime la varianza, dove ho alta var il krig tende a ridurla e viceversa (effetto di smoothing che mi aspetterei)
+
+vale la pena fare loocv? togliere una sola osservazione? si perchè il kriging è un previsore esatto, la cv permette di fare diagnostica perchè altrimenti riproduco le oss e non avrei residui da trattare. 
+
+```{r}
+ n<-length(xvalid.notrend$error)
+points.geodata(coords=soja.geo$coords,data=xvalid.notrend$error,main="mappa dei residui",
+	    pt.divide="data.proportional",col=gray(1:n/n))
+text(x=soja.geo$coords, labels=round(xvalid.notrend$error,2),cex=0.7,col=2,adj=c(0,1))
+```
+
+per ogni sito campionario valore del residuo,  pallino più grande quanto più è grande il residuo; utile per capire dove sulla mappa si fanno gli errori.  dove osservo pallini grandi so che la previsione in quella regione è particolarmente distorta. i residui si possono riportare sulla mappa, utile! dove l'errore è piccolo posso anche buttare via l'osservazione. dove è alto no, l'osservazione è utile perchè se la tolgo sbaglio molto
+  
+**cv per valutare previsioni**
+
+si può usare per confrontare modelli alternativi anche  misure di fit 
+
+```{r}
+cor(xvalid.notrend$data,xvalid.notrend$predicted)
+mean(xvalid.notrend$error^2)
+```
+
+EQM (MSE) che si può imputare alla scelta di covariogramma o variogramma; ripetendo per altre scelte si può fare un confronto
+
+## Griglie e kriging dentro shapefile
+
+Lettura dati
+
+```{r}
+a=read.table("dati_krg.csv",header=T)
+obj  <- as.geodata(a,coords.col=1:2,data.col=3)	
+vario <- variog(obj, estimator.type="classical")	# variogramma empirico
+plot(vario, main="variogramma empirico")			# variogramma per punti
+vario.fit <-variofit(vario,ini.cov.pars=c(30,10000),weights="cressie",
+                     cov.model="exponential", fix.nugget=FALSE,nugget=0)
+cov.pars=vario.fit$cov.pars #salvo output
+lines(vario.fit)
+
+```
+
+Lettura shape
+
+```{r}
+library(maptools)
+library(ggplot2)
+
+# ricodifica del bordo come matrice  serve in krige.conv  
+poly<-readShapePoly("acquif.shp",verbose=TRUE) 
+plot(poly,col="lightblue")
+poligono <- fortify(poly)
+  #produce un df in cui forza l'info contenuta nello shape
+  #i nodi e altro, ci interessano solo lat e long
+
+p=as.matrix(poligono[,c("long","lat")])
+```
+
+costruisco matrice coordinate
+griglia e kriging stessa già usata prima
+
+```{r}
+X=bbox(poly)[1,]
+Y=bbox(poly)[2,]
+size=100 #con 500 pixel più precisi
+YY<-round(seq(ceiling(min(Y)),floor(max(Y)), length=size),2)
+XX<-round(seq(ceiling(min(X)),floor(max(X)), length=size),2)
+griglia<-expand.grid(X=XX,Y=YY)
+dim(griglia)
+plot(poly)
+points(griglia,cex=0.1)
+```
+
+la griglia si sovrappone alla regione di interesse; 
+
+```{r}
+krg.or <- krige.conv(geodata=obj, 
+                     loc=griglia,
+                     krige=krige.control(cov.pars=cov.pars,
+                                             cov.model="exponential",
+                                             nugget=0),
+                     borders=p)
+```
+
+dobbiamo mettere i contorni del poligono in cui vogliamo la previsione, 2 colonne e k righe, k punti dislocati sul poligono
+
+```{r}
+image(krg.or) 
+legend.krige(x.leg=c(1575000, 1580000), y.leg=c(4986785, 5010000), val=krg.or$predict,
+           vert=TRUE, off=0.7, cex=0.9, scale.vals=pretty(krg.or$predict)
+)
+contour(krg.or,add=T,coords.data=a$coords,cex=0.3)
+points.geodata(obj,add=T,pt.divide="quintiles", col=1:5)
+```
+
+
+
+
+
+
+
+
