@@ -1,0 +1,95 @@
+---
+title: "esame_201804"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r, results=F}
+require(geoR)
+require(maptools)
+require(rgdal)
+d <- read.csv('datind.csv', sep = ';')
+```
+
+## Esercizio 1
+
+**1) Si descriva sinteticamente il dataset:**
+
+```{r}
+str(d)
+summary(d)
+```
+
+Sono presenti 119 osservazioni. Le tre variabili corrispondono alla variabile risposta (index) e alle due coordinate cartografiche (long e lat), espresse secondo la codifica UTM. 
+
+**2) Analisi esplorativa di larga scala:**
+
+```{r}
+d.geo = as.geodata(d, coords.col=2:3, data.col=1)
+d.poly = readOGR("Milano.shp", verbose=T)
+
+
+plot.geodata(d.geo,scatter3d = TRUE, lowess=T)
+plot(d.poly, ylab = 'Y Coord', xlab = 'X Coord')
+points.geodata(d.geo,pt.divide="quintiles", col=1:5, add=T)
+legend(496500, 5032500, pch=19, col=1:5, pt.cex=(1:5)/3,
+    c("1° quintile","2° quintile","3° quintile","4° quintile","5° quintile"))
+```
+
+I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si può osservare sia lungo la direzione nord-sud sia est-ovest. 
+
+**3) Calcolare il variogramma empirico**
+
+```{r}
+variog.emp <- variog(d.geo, estimator.type="classical", uvec=20)
+plot(variog.emp, type='o')
+```
+
+**4) Riportare i valori del variogramma empirico e del numero di coppie di punti per ciascun lag**
+
+```{r}
+(rbind(round(variog.emp$v,2), round(variog.emp$n)))
+```
+
+**5) Si detrendizzino i dati con un polinomio di secondo grado e riportare il variogramma:**
+
+```{r}
+variog.detrend <- variog(d.geo,trend='2nd', estimator.type="classical", uvec=13, max.dist = 4500)	
+plot(variog.detrend)
+```
+
+**6) A partire dal variog empirico ottenuto al punto precedente stimare il modello exp tramite WLS**
+
+Inizializzare con sistema di pesi Cressie e valori Nugget = 0.5, Soglia parziale = 1, Range = 1000
+
+```{r}
+variog.fit <- variofit(variog.detrend, ini.cov.pars = c(1,1000), cov.model="exponential", fix.nugget=FALSE, nugget=0.5, weights = 'cressie')
+summary(variog.fit)
+```
+
+Stime:
+
+* nugget=0.328
+
+* soglia parziale=1.197
+
+* range effettivo=2239.83
+
+* nugget relativo=0.328/(0.328+1.197)=0.21
+
+**4) Effettuare una previsione kriging di index in (long=514650.73 , lat=5033907.12) con i dati detrendizzati**
+
+```{r}
+g = data.frame(t(c(long=514650.73, lat=5033907.12)))
+m = lm(index~lat+long+I(lat^2)+I(long^2)+lat:long, data=d)
+
+data.geol = as.geodata(data.frame(d, res=resid(m)), coords.col = 2:3, data.col = 4)
+krg = krige.conv(data.geol, loc=g, 
+                 krige=krige.control(type.krige = "SK", beta=0,
+                                     cov.pars = variog.fit$cov.pars,
+                                     cov.model = "exponential",
+                                     nugget = variog.fit$nugget))
+predict(m,g)+krg$predict
+```
+
