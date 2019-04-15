@@ -34,10 +34,10 @@ plot.geodata(d.geo,scatter3d = TRUE, lowess=T)
 plot(d.poly, ylab = 'Y Coord', xlab = 'X Coord')
 points.geodata(d.geo,pt.divide="quintiles", col=1:5, add=T)
 legend(496500, 5032500, pch=19, col=1:5, pt.cex=(1:5)/3,
-    c("1° quintile","2° quintile","3° quintile","4° quintile","5° quintile"))
+    c("1? quintile","2? quintile","3? quintile","4? quintile","5? quintile"))
 ```
 
-I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si può osservare sia lungo la direzione nord-sud sia est-ovest. 
+I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si pu? osservare sia lungo la direzione nord-sud sia est-ovest. 
 
 **3) Calcolare il variogramma empirico**
 
@@ -92,4 +92,82 @@ krg = krige.conv(data.geol, loc=g,
                                      nugget = variog.fit$nugget))
 predict(m,g)+krg$predict
 ```
+
+## Esercizio 2
+
+**1) Definire un point pattern formato dalle locazioni delle aziende usando i confini amministrativi della Lombardia come finestra del processo**
+
+```{r}
+require(rgdal)
+require(spatstat)
+require(maptools)
+lomb.poly <- readOGR("Lombardia_UTMWGS84.shp", verbose=T)
+d <- read.csv("aziende.csv", sep=';')
+ppp = as.ppp(d,W=lomb.poly)
+
+plot(ppp, main='lombardia aziende')
+```
+
+**2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico.**
+
+```{r}
+qx<-quadratcount(ppp,10,10)	### tabella 4x4
+plot(qx)
+```
+
+**3) Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
+
+```{r}
+set.seed(1804)
+envpp<-envelope(ppp,fun=Gest,nsim=25,nrank=,verbose=TRUE,saveall=F)
+a = plot(envpp,main="inviluppo MC",xlab="y")
+```
+
+**4) Riportare risultati test**
+
+```{r}
+(te10 <- quadrat.test(ppp,10))
+```
+
+**5) si produca una stima dell'intensitÃ  del processo**
+
+```{r}
+Z <- density.ppp(ppp, varcov=diag( c(var(d$long),var(d$lat))/16))
+plot(Z,main="mappa dell'intensitÃ  kernel"); 
+plot(ppp,add=T,cex=0.6,col="black")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

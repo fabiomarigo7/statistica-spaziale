@@ -1,4 +1,9 @@
-# esame_201804
+---
+title: "esame_201804"
+output: 
+  html_document:
+    keep_md: true
+---
 
 
 ```r
@@ -48,10 +53,10 @@ require(rgdal)
 ## rgdal: version: 1.4-3, (SVN revision 828)
 ##  Geospatial Data Abstraction Library extensions to R successfully loaded
 ##  Loaded GDAL runtime: GDAL 2.2.3, released 2017/11/20
-##  Path to GDAL shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/gdal
+##  Path to GDAL shared files: C:/Users/fabio.PC-PRO/Documents/R/win-library/3.4/rgdal/gdal
 ##  GDAL binary built with GEOS: TRUE 
 ##  Loaded PROJ.4 runtime: Rel. 4.9.3, 15 August 2016, [PJ_VERSION: 493]
-##  Path to PROJ.4 shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/proj
+##  Path to PROJ.4 shared files: C:/Users/fabio.PC-PRO/Documents/R/win-library/3.4/rgdal/proj
 ##  Linking to sp version: 1.3-1
 ```
 
@@ -101,7 +106,7 @@ d.poly = readOGR("Milano.shp", verbose=T)
 
 ```
 ## OGR data source with driver: ESRI Shapefile 
-## Source: "C:\Users\fabio\Downloads\Appello_20180419\Milano.shp", layer: "Milano"
+## Source: "C:\Users\fabio.PC-PRO\Documents\github repos\statistica-spaziale\esame_201804\Milano.shp", layer: "Milano"
 ## with 1 features
 ## It has 9 fields
 ## Integer64 fields read as strings:  COD_ISTAT
@@ -117,12 +122,12 @@ plot.geodata(d.geo,scatter3d = TRUE, lowess=T)
 plot(d.poly, ylab = 'Y Coord', xlab = 'X Coord')
 points.geodata(d.geo,pt.divide="quintiles", col=1:5, add=T)
 legend(496500, 5032500, pch=19, col=1:5, pt.cex=(1:5)/3,
-    c("1° quintile","2° quintile","3° quintile","4° quintile","5° quintile"))
+    c("1? quintile","2? quintile","3? quintile","4? quintile","5? quintile"))
 ```
 
 ![](esame_201804_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
 
-I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si può osservare sia lungo la direzione nord-sud sia est-ovest. 
+I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si pu? osservare sia lungo la direzione nord-sud sia est-ovest. 
 
 **3) Calcolare il variogramma empirico**
 
@@ -278,4 +283,163 @@ predict(m,g)+krg$predict
 ##        1 
 ## 2.492116
 ```
+
+## Esercizio 2
+
+**1) Definire un point pattern formato dalle locazioni delle aziende usando i confini amministrativi della Lombardia come finestra del processo**
+
+
+```r
+require(rgdal)
+require(spatstat)
+```
+
+```
+## Loading required package: spatstat
+```
+
+```
+## Loading required package: spatstat.data
+```
+
+```
+## Loading required package: nlme
+```
+
+```
+## Loading required package: rpart
+```
+
+```
+## 
+## spatstat 1.59-0       (nickname: 'J'ai omis les oeufs de caille') 
+## For an introduction to spatstat, type 'beginner'
+```
+
+```
+## 
+## Note: R version 3.4.4 (2018-03-15) is more than 9 months old; we strongly recommend upgrading to the latest version
+```
+
+```r
+require(maptools)
+lomb.poly <- readOGR("Lombardia_UTMWGS84.shp", verbose=T)
+```
+
+```
+## OGR data source with driver: ESRI Shapefile 
+## Source: "C:\Users\fabio.PC-PRO\Documents\github repos\statistica-spaziale\esame_201804\Lombardia_UTMWGS84.shp", layer: "Lombardia_UTMWGS84"
+## with 1 features
+## It has 6 fields
+## Integer64 fields read as strings:  RG_ RG_ID
+```
+
+```r
+d <- read.csv("aziende.csv", sep=';')
+ppp = as.ppp(d,W=lomb.poly)
+
+plot(ppp, main='lombardia aziende')
+```
+
+![](esame_201804_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+**2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico.**
+
+
+```r
+qx<-quadratcount(ppp,10,10)	### tabella 4x4
+plot(qx)
+```
+
+![](esame_201804_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+**3) Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
+
+
+```r
+set.seed(1804)
+envpp<-envelope(ppp,fun=Gest,nsim=25,nrank=,verbose=TRUE,saveall=F)
+```
+
+```
+## Generating 25 simulations of CSR  ...
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,  25.
+## 
+## Done.
+```
+
+```r
+a = plot(envpp,main="inviluppo MC",xlab="y")
+```
+
+![](esame_201804_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+**4) Riportare risultati test**
+
+
+```r
+(te10 <- quadrat.test(ppp,10))
+```
+
+```
+## Warning: Some expected counts are small; chi^2 approximation may be
+## inaccurate
+```
+
+```
+## 
+## 	Chi-squared test of CSR using quadrat counts
+## 	Pearson X2 statistic
+## 
+## data:  ppp
+## X2 = 125.12, df = 71, p-value = 0.0001567
+## alternative hypothesis: two.sided
+## 
+## Quadrats: 72 tiles (irregular windows)
+```
+
+**5) si produca una stima dell'intensità del processo**
+
+
+```r
+Z <- density.ppp(ppp, varcov=diag( c(var(d$long),var(d$lat))/16))
+plot(Z,main="mappa dell'intensità kernel"); 
+plot(ppp,add=T,cex=0.6,col="black")
+```
+
+![](esame_201804_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
