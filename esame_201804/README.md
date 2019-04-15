@@ -1,3 +1,6 @@
+# esame_201804
+
+
 ```r
 require(geoR)
 ```
@@ -45,10 +48,10 @@ require(rgdal)
 ## rgdal: version: 1.4-3, (SVN revision 828)
 ##  Geospatial Data Abstraction Library extensions to R successfully loaded
 ##  Loaded GDAL runtime: GDAL 2.2.3, released 2017/11/20
-##  Path to GDAL shared files: C:/Users/fabio.PC-PRO/Documents/R/win-library/3.4/rgdal/gdal
+##  Path to GDAL shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/gdal
 ##  GDAL binary built with GEOS: TRUE 
 ##  Loaded PROJ.4 runtime: Rel. 4.9.3, 15 August 2016, [PJ_VERSION: 493]
-##  Path to PROJ.4 shared files: C:/Users/fabio.PC-PRO/Documents/R/win-library/3.4/rgdal/proj
+##  Path to PROJ.4 shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/proj
 ##  Linking to sp version: 1.3-1
 ```
 
@@ -98,7 +101,7 @@ d.poly = readOGR("Milano.shp", verbose=T)
 
 ```
 ## OGR data source with driver: ESRI Shapefile 
-## Source: "C:\Users\fabio.PC-PRO\Documents\github repos\statistica-spaziale\esame_201804\Milano.shp", layer: "Milano"
+## Source: "C:\Users\fabio\Documents\github repos\statistica-spaziale\esame_201804\Milano.shp", layer: "Milano"
 ## with 1 features
 ## It has 9 fields
 ## Integer64 fields read as strings:  COD_ISTAT
@@ -119,7 +122,7 @@ legend(496500, 5032500, pch=19, col=1:5, pt.cex=(1:5)/3,
 
 ![](esame_201804_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
 
-I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si pu? osservare sia lungo la direzione nord-sud sia est-ovest. 
+I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend campanulare si può osservare sia lungo la direzione nord-sud sia est-ovest. 
 
 **3) Calcolare il variogramma empirico**
 
@@ -247,6 +250,10 @@ Stime:
 
 * nugget relativo=0.328/(0.328+1.197)=0.21
 
+Formula del variogramma (stimato):
+
+$$\gamma(h) = 0.328 + 1.197\Bigl(1-\exp\Bigl\{\frac{h}{747.67}\Bigr\}\Bigr) $$
+
 **4) Effettuare una previsione kriging di index in (long=514650.73 , lat=5033907.12) con i dati detrendizzati**
 
 
@@ -320,7 +327,7 @@ lomb.poly <- readOGR("Lombardia_UTMWGS84.shp", verbose=T)
 
 ```
 ## OGR data source with driver: ESRI Shapefile 
-## Source: "C:\Users\fabio.PC-PRO\Documents\github repos\statistica-spaziale\esame_201804\Lombardia_UTMWGS84.shp", layer: "Lombardia_UTMWGS84"
+## Source: "C:\Users\fabio\Documents\github repos\statistica-spaziale\esame_201804\Lombardia_UTMWGS84.shp", layer: "Lombardia_UTMWGS84"
 ## with 1 features
 ## It has 6 fields
 ## Integer64 fields read as strings:  RG_ RG_ID
@@ -335,7 +342,7 @@ plot(ppp, main='lombardia aziende')
 
 ![](esame_201804_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
-**2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico.**
+**2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico. Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
 
 
 ```r
@@ -344,9 +351,6 @@ plot(qx)
 ```
 
 ![](esame_201804_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
-
-**3) Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
-
 
 ```r
 set.seed(1804)
@@ -364,33 +368,11 @@ envpp<-envelope(ppp,fun=Gest,nsim=25,nrank=,verbose=TRUE,saveall=F)
 a = plot(envpp,main="inviluppo MC",xlab="y")
 ```
 
-![](esame_201804_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](esame_201804_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
-**4) Riportare risultati test**
+Dal test grafico si osserva che la funzione di rip. empirica è contenuta nelle bande degli inviluppi, salvo piccoli discostamenti. Ciò fa propendere per l'accettazione dell'ipotesi che il processo sia un CSR, ovvero un processo di punto omogeneo. In tal caso NON è possibile ipotizzare un comportamento competitivo delle aziende sul territorio né la presenza di potenziali economie di scala derivanti dall'addensamento sul territorio di infrastrutture a supporto delle aziende; si può pensare anzi alla presenza di aziende distribuite sul territorio in situazione di concorrenza perfetta. 
 
-
-```r
-(te10 <- quadrat.test(ppp,10))
-```
-
-```
-## Warning: Some expected counts are small; chi^2 approximation may be
-## inaccurate
-```
-
-```
-## 
-## 	Chi-squared test of CSR using quadrat counts
-## 	Pearson X2 statistic
-## 
-## data:  ppp
-## X2 = 125.12, df = 71, p-value = 0.0001567
-## alternative hypothesis: two.sided
-## 
-## Quadrats: 72 tiles (irregular windows)
-```
-
-**5) si produca una stima dell'intensità del processo**
+**3) si produca una stima dell'intensità del processo**
 
 
 ```r
@@ -399,8 +381,45 @@ plot(Z,main="mappa dell'intensità kernel");
 plot(ppp,add=T,cex=0.6,col="black")
 ```
 
-![](esame_201804_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](esame_201804_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
+Avendo concluso che l'ipotesi di CSR fosse compatibile coi dati a disposizione, si è stimata l'intensità facendo rapporto tra la numerosità delle aziende sul territorio (100) e l'area della regione Lombardia
+
+
+```r
+f = 1e+6
+(area = lomb.poly$AREA/f) # kmq
+```
+
+```
+## [1] 23869.53
+```
+
+```r
+(n = nrow(d)) # numero birrifici
+```
+
+```
+## [1] 100
+```
+
+```r
+(lambda = n/area) # intensità per 1kmq
+```
+
+```
+## [1] 0.004189442
+```
+
+```r
+(lambda*20)
+```
+
+```
+## [1] 0.08378884
+```
+
+Questo valore è il numero di aziende attese per 20kmq.
 
 
 

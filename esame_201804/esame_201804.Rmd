@@ -37,7 +37,7 @@ legend(496500, 5032500, pch=19, col=1:5, pt.cex=(1:5)/3,
     c("1? quintile","2? quintile","3? quintile","4? quintile","5? quintile"))
 ```
 
-I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend si pu? osservare sia lungo la direzione nord-sud sia est-ovest. 
+I dati presentano valori alti nel centro di Milano, com'era immaginabile. Questo trend campanulare si può osservare sia lungo la direzione nord-sud sia est-ovest. 
 
 **3) Calcolare il variogramma empirico**
 
@@ -78,6 +78,10 @@ Stime:
 
 * nugget relativo=0.328/(0.328+1.197)=0.21
 
+Formula del variogramma (stimato):
+
+$$\gamma(h) = 0.328 + 1.197\Bigl(1-\exp\Bigl\{\frac{h}{747.67}\Bigr\}\Bigr) $$
+
 **4) Effettuare una previsione kriging di index in (long=514650.73 , lat=5033907.12) con i dati detrendizzati**
 
 ```{r}
@@ -108,35 +112,38 @@ ppp = as.ppp(d,W=lomb.poly)
 plot(ppp, main='lombardia aziende')
 ```
 
-**2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico.**
+**2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico. Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
 
 ```{r}
 qx<-quadratcount(ppp,10,10)	### tabella 4x4
 plot(qx)
-```
 
-**3) Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
-
-```{r}
 set.seed(1804)
 envpp<-envelope(ppp,fun=Gest,nsim=25,nrank=,verbose=TRUE,saveall=F)
 a = plot(envpp,main="inviluppo MC",xlab="y")
 ```
 
-**4) Riportare risultati test**
+Dal test grafico si osserva che la funzione di rip. empirica è contenuta nelle bande degli inviluppi, salvo piccoli discostamenti. Ciò fa propendere per l'accettazione dell'ipotesi che il processo sia un CSR, ovvero un processo di punto omogeneo. In tal caso NON è possibile ipotizzare un comportamento competitivo delle aziende sul territorio né la presenza di potenziali economie di scala derivanti dall'addensamento sul territorio di infrastrutture a supporto delle aziende; si può pensare anzi alla presenza di aziende distribuite sul territorio in situazione di concorrenza perfetta. 
 
-```{r}
-(te10 <- quadrat.test(ppp,10))
-```
-
-**5) si produca una stima dell'intensitÃ  del processo**
+**3) si produca una stima dell'intensità del processo**
 
 ```{r}
 Z <- density.ppp(ppp, varcov=diag( c(var(d$long),var(d$lat))/16))
-plot(Z,main="mappa dell'intensitÃ  kernel"); 
+plot(Z,main="mappa dell'intensità kernel"); 
 plot(ppp,add=T,cex=0.6,col="black")
 ```
 
+Avendo concluso che l'ipotesi di CSR fosse compatibile coi dati a disposizione, si è stimata l'intensità facendo rapporto tra la numerosità delle aziende sul territorio (100) e l'area della regione Lombardia
+
+```{r}
+f = 1e+6
+(area = lomb.poly$AREA/f) # kmq
+(n = nrow(d)) # numero birrifici
+(lambda = n/area) # intensità per 1kmq
+(lambda*20)
+```
+
+Questo valore è il numero di aziende attese per 20kmq.
 
 
 
