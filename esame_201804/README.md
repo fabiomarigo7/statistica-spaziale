@@ -1,11 +1,3 @@
----
-title: "esame_201804"
-output: 
-  html_document:
-    keep_md: true
----
-
-
 ```r
 require(geoR)
 ```
