@@ -7,40 +7,7 @@ Librerie necessarie all'analisi:
 
 ```r
 require(maptools)
-```
-
-```
-## Loading required package: maptools
-```
-
-```
-## Loading required package: sp
-```
-
-```
-## Checking rgeos availability: FALSE
-##  	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
-##  	which has a restricted licence. It is disabled by default;
-##  	to enable gpclib, type gpclibPermit()
-```
-
-```r
 require(rgdal)
-```
-
-```
-## Loading required package: rgdal
-```
-
-```
-## rgdal: version: 1.4-3, (SVN revision 828)
-##  Geospatial Data Abstraction Library extensions to R successfully loaded
-##  Loaded GDAL runtime: GDAL 2.2.3, released 2017/11/20
-##  Path to GDAL shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/gdal
-##  GDAL binary built with GEOS: TRUE 
-##  Loaded PROJ.4 runtime: Rel. 4.9.3, 15 August 2016, [PJ_VERSION: 493]
-##  Path to PROJ.4 shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/proj
-##  Linking to sp version: 1.3-1
 ```
 
 I cinque file dbf, sbn, sbx, shp, shx servono a produrre la mappa su R, ma soltanto dbf shp e shx sono essenziali. 
@@ -52,7 +19,7 @@ lomb.poly <- readOGR("lombardia.shp", verbose=T)
 
 ```
 ## OGR data source with driver: ESRI Shapefile 
-## Source: "C:\Users\fabio\Desktop\laboratorio spaziale\Lab 1 shape file e analisi di Point Pattern-20190410\lombardia.shp", layer: "lombardia"
+## Source: "C:\Users\fabio\Documents\github repos\statistica-spaziale\laboratorio_1\lombardia.shp", layer: "lombardia"
 ## with 1 features
 ## It has 7 fields
 ## Integer64 fields read as strings:  COM_ COM_ID
@@ -172,36 +139,11 @@ plot(xx)
 
 ## Processi di punto
 
+
 ```r
 require(spatstat)
 ```
 
-```
-## Loading required package: spatstat
-```
-
-```
-## Loading required package: spatstat.data
-```
-
-```
-## Loading required package: nlme
-```
-
-```
-## Loading required package: rpart
-```
-
-```
-## 
-## spatstat 1.59-0       (nickname: 'J'ai omis les oeufs de caille') 
-## For an introduction to spatstat, type 'beginner'
-```
-
-```
-## 
-## Note: R version 3.4.4 (2018-03-15) is more than 9 months old; we strongly recommend upgrading to the latest version
-```
 
 ```r
 ppp<-incendi[,c("EstN","Nord")]
@@ -222,7 +164,7 @@ ppp0=as.ppp(ppp,W=lomb.poly);ppp0 ##informazione combinata
 plot(ppp0,cex=0.5,main=,"Incendi in Lombardia nel 2003")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 Processi con marcature (mark = estensione incendio)
 
@@ -247,7 +189,7 @@ ppp0=as.ppp(ppp,W=lomb.poly,mark=ppp$Ettari);ppp0
 plot(ppp0,main=,"Incendi in Lombardia nel 2003 differenziati per estensione")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ## TEST CSR
 
@@ -298,7 +240,7 @@ Single connected closed polygon = approssima il cerchio con una superficie di 12
 plot(pp,cex=0.6,main="locazioni eventi",cex.main =1.2,lwd=3)
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 ### Test basato sul quadrat counts 
 
@@ -308,7 +250,7 @@ qx<-quadratcount(pp,4,4)	### tabella 4x4
 plot(qx)
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 Con quadratcounts partiziono le aree del cerchio in cellettine e conto quanti eventi trovo in quell'area. 
 
@@ -347,7 +289,7 @@ Test BILATERALE di RIFIUTO: pvalue molto piccolo --> HP di CSR non sembra valida
 plot(te0, col="red", cex=1, lty=1.5, lwd=3,bg = gray(0.7))
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 Informazione osservata = in alto a sx.
 
@@ -361,7 +303,7 @@ plot(te0, col="red", cex=1, lty=1.5, lwd=3,bg = gray(0.7))
 plot(pp, pch="+", cols="green", cex=1.5, lwd=1.2,add=T)
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 Rifare con 10x10 celle:
 
@@ -370,7 +312,7 @@ qx10<-quadratcount(pp,10,10)	### tabella 10x10
 plot(qx10)
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ```r
 te10 <- quadrat.test(pp,10)	###test dispersione per 10x10
@@ -410,7 +352,7 @@ Distanza dal primo vicino:
 hist(nndist(pp),main="distanza dal primo vicino",xlab="distanza")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 Coda sinistra molto alta --> ci aspettiamo ci sia cluster
 
@@ -426,7 +368,7 @@ plot(GGb, theo~ r,add=T,col=2,lty=3)
 legend(25000, 0.2,  legend=c("F.R. empirica","F.R. teorica"),lty=c(1,3), col=c(1,2),bty="n")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 **Inviluppo** Montecarlo per test CSR
 
@@ -450,7 +392,7 @@ envpp<-envelope(pp,fun=Gest,nsim=100,nrank=,verbose=TRUE,saveall=F)
 a = plot(envpp,main="inviluppo MC",xlab="y")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ```r
 a
@@ -479,13 +421,13 @@ plot(Z,main="mappa dell'intensità kernel");
 plot(pp,add=T,cex=0.6,col="black")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ```r
 persp(Z) 
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-24-2.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
 
 Sulla Lombardia:
 
@@ -521,7 +463,7 @@ ppp0=as.ppp(ppp,W=lomb.poly);ppp0
 plot(ppp0,cex=0.5,main=,"Incendi in Lombardia nel 2003")
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 Stima dell'intensità:
 
@@ -532,7 +474,7 @@ plot(Z,main="mappa dell'intensità kernel");
 plot(ppp0,add=T,cex=0.4)
 ```
 
-![](Lab_1_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](Lab_1_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 Rispetto a prima ho cambiato il parametro di lisciamento:
 

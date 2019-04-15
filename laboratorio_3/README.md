@@ -1,18 +1,13 @@
+# Laboratorio 3
+
+
+
+
 ```r
 require(geoR)
 ```
 
-```
-## Loading required package: geoR
-```
 
-```
-## --------------------------------------------------------------
-##  Analysis of Geostatistical Data
-##  For an Introduction to geoR go to http://www.leg.ufpr.br/geoR
-##  geoR version 1.7-5.2.1 (built on 2016-05-02) is now loaded
-## --------------------------------------------------------------
-```
 
 ```r
 dat.om<-soja98
@@ -85,7 +80,7 @@ dat.om.geo <- as.geodata(obj,coords.col=1:2,data.col=3)		# converte oggetto in c
 plot(dat.om.geo)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 Risulta una tendenza da sud a nord che aumenta la concentrazione. Potrebbe esserci componente di larga scala, anisotropia.
 
@@ -102,7 +97,7 @@ plot(variog(dat.om.geo, estimator.type="classical",option="cloud"),cex=0.4)
 ## variog: computing omnidirectional variogram
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 In ascissa stiamo plottando le distanze, in ordinata la differenza tra le Y. 
 
@@ -123,7 +118,7 @@ dat.om.var <- variog(dat.om.geo,	estimator.type="classical", uvec=14)
 plot(dat.om.var)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 Rimuovendo l'opzione cloud, variog non calcola la nuvola, ma produce il variogramma empirico. Calcola delle bande di confidenza e plotta nelle ascisse i punti centrali delle classi e ordinate le medie delle differenze al quadrato. 
 
@@ -149,15 +144,15 @@ dat.om.var.robust <- variog(dat.om.geo, estimator.type="modulus",uvec=14)
 plot(dat.om.var,main="variogramma empirico",ylim=c(0,110));	
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ```r
 plot(dat.om.var.robust,main="variogramma robusto",ylim=c(0,110))
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-5-2.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
 
-I due output sono pressoché identici nel lato che ci interessa poiché non ci sono outlier evidenti.
+I due output sono pressochè identici nel lato che ci interessa poichè non ci sono outlier evidenti.
 
 Lisciamento kernel del variogramma:
 
@@ -175,7 +170,7 @@ plot(vario.s,type="l",ylim=c(0,110))
 points(dat.om.var$u, dat.om.var$v, col=2)	# aggiunge variogramma empirico al plot
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 Ottengo un'operazione di lisciamento migliore, meno brutale rispetto a prima, ma le informazioni che ci vengono fornite sono molto simili.
 
@@ -203,11 +198,11 @@ par(mfrow=c(1,1))
 plot(vario.a, type="l", ylim=c(0,80))
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 Posso pensare che la soglia del variogramma sia circa 45, mentre il range potrebbe essere in corrispondenza della distanza 100.
 
-Il nugget posso ipotizzare sia intorno a 20: il fenomeno risulta essere non molto disturbato dal rumore, infatti quasi la metà della variabilità (20/40) è dovuta al white noise, ovvero la componente di errore.
+Il nugget posso ipotizzare sia intorno a 20: il fenomeno risulta essere non molto disturbato dal rumore, infatti quasi la metà della variabilitè (20/40) è dovuta al white noise, ovvero la componente di errore.
 
 **Variogrammi direzionali**
 
@@ -265,21 +260,21 @@ legend("topleft", cex=0.8,
 				expression(135 * degree)), lty=c(1:5),col=1:5)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
-Le stime nei variogrammi sono molto più variabili, in quanto la numerosità è molto più bassa.
+Le stime nei variogrammi sono molto più variabili, in quanto la numerositè è molto più bassa.
 
 Tutti i variog direzionali tranne quello blu, presentano una crescita con l'aumentare della distanza.
 
 Questo vuol dire che molto probabilmente sussiste un trend, di direzione nord sud (come si era visto sopra in un altro grafico).
 
-Il variog rosso decresce. Questo può essere dato da una numerosità molto bassa negli ultimi bin. 
+Il variog rosso decresce. Questo può essere dato da una numerositè molto bassa negli ultimi bin. 
 
 Per vedere il processo al netto del trend si può osservare il variogramma direzionale est-overt (ortogonale al trend!).
 
 Un modo per trattare il trend è il seguente: 
 
-* stimo componente di larga scala OLS (polinomio max 3° grado)
+* stimo componente di larga scala OLS (polinomio max 3 grado)
 * tolgo componente di larga scala
 * stimo variogramma empirico sui residui della regressione senza larga scala
 
@@ -298,7 +293,7 @@ dat.om.var.notr <- variog(dat.om.geo,trend ="1st", estimator.type="classical", u
 plot(dat.om.var.notr)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 Detrend fatto a mano:
 
@@ -314,7 +309,7 @@ plot(variog(
 ## variog: computing omnidirectional variogram
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 `res=residuals(lm(obj$MO~obj$Y)))` --> dati su cui faccio il variogramma, prendo i residui di una regressione lineare in direzione Y, l'unica dove ho visto esserci un trend.
 
@@ -332,9 +327,9 @@ plot(variog(as.geodata(obj=data.frame(obj[,1:2],res=residuals(lm(obj$MO~obj$Y+ob
 ## variog: computing omnidirectional variogram
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
-Detrendizzando rispetto a tutte e due le coordinate viene uguale perché X non è significativa:
+Detrendizzando rispetto a tutte e due le coordinate viene uguale perchè X non è significativa:
 
 
 ```r
@@ -427,7 +422,7 @@ plot(c(0,180),c(0,100),type="n",xlab="distanza",ylab="semivarianza",
                   expression(135 * degree)), lty=c(1:5),col=1:5)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 
 ## Stima parametrica del variogramma tramite LS
@@ -454,7 +449,7 @@ lines.variomodel(cov.model = "exp", cov.pars = c(25,35), nug =20,
 abline(h=45)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 0.95*soglia = secondo elemento di cov.pars perchè la soglia è un asintoto orizzontale, in questo caso il range
 
@@ -483,7 +478,7 @@ legend("bottomright", cex=0.8,
                 "variogramma teorico exp 2", "var wave", "var sferico"), lty=c(1:5),col=1:5)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 
 ### Metodo WLS
@@ -604,7 +599,7 @@ dat.om.var <- variog(dat.om.geo, estimator.type="classical")	     # variogramma 
 plot(dat.om.var)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 2) OLS
 
@@ -627,7 +622,7 @@ plot(dat.om.var)
 lines(dat.om.var.fit.ols,col=2, lty=2, lwd=2)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 3) WLS con npairs come peso
 
@@ -649,7 +644,7 @@ plot(dat.om.var)
 lines(dat.om.var.fit.wls,col=3, lty=3, lwd=3)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 4) OLS con max.dist = 150
 
@@ -671,7 +666,7 @@ plot(dat.om.var)
 lines(dat.om.var.fit.ols.MD,col=4, lty=4, lwd=2)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 5) OLS con max.dist = 150
 
@@ -693,7 +688,7 @@ plot(dat.om.var)
 lines(dat.om.var.fit.wls.MD,col=5, lty=5,lwd=3)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 Tutto in uno:
 
@@ -714,7 +709,7 @@ legend(15,20,c("variogramma empirico",
 				lty=1:5, col=1:5,cex=0.9,bty="n")
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 Confronto tra modelli:
 
@@ -757,7 +752,7 @@ plot(dat.om.var)
 lines(dat.om.var.fit.sphe.ols,lwd=2)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 Confronto tra modelli:
 
@@ -794,7 +789,7 @@ plot(dat.om.var)
 	       col=c(1:3),lty=c(1:3))
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ## Stima parametrica del variogramma tramite ML
 
@@ -883,7 +878,7 @@ legend("bottomright",c("variogramma empirico","variogramma WLS","variogramma ML"
 col=c(1:3),lty=c(1:3))
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 
 ## Valutazione della variabilità del variogramma tramite MonteCarlo e test grafici via permutazione
@@ -946,7 +941,7 @@ for(i in 1:4){
 ## variog: computing omnidirectional variogram
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
 
 valutazione della variabilità del variogramma
 
@@ -969,7 +964,7 @@ plot(dat.om.var, env =dat.om.env.mod )
 lines(dat.om.var.fit,col=2, lty=2)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](laboratorio_3_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
 valutazione della correlazione spaziale - test grafico via permutazione
 
@@ -988,30 +983,4 @@ dat.om.env <- variog.mc.env(dat.om.geo, obj.var = dat.om.var,save.sim=T)
   plot(dat.om.var, envelope = dat.om.env)
 ```
 
-![](laboratorio_3_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+![](laboratorio_3_files/figure-html/unnamed-chunk-34-1.png)<!-- -->

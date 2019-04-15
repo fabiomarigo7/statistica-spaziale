@@ -46,8 +46,12 @@ plot(myscallops$long, myscallops$lat,xlab="longitudine", ylab="latitudine")
 
 Libreria "maps":
 
-```{r}
+```{r message=FALSE}
 library(maps)					# carica libreria per mappe
+```
+
+
+```{r}
 map("usa")						# mappa degli USA- data set in R
 map("usa",fill=T,col=3, xlim=c(-78,-65), ylim=c(38.2,41.5))
 points(myscallops$long, myscallops$lat,cex=0.8)	# aggiunge punti
@@ -55,8 +59,12 @@ points(myscallops$long, myscallops$lat,cex=0.8)	# aggiunge punti
 
 Libreria "spatstat":
 
-```{r}
+```{r message=FALSE}
 library(spatstat)
+```
+
+
+```{r}
 celle=4	
 w<-convexhull.xy(x=myscallops$long,y=myscallops$lat)	# involucro convesso 
 X<-ppp(myscallops$long,myscallops$lat,window=w)		    # oggetto point pattern 
@@ -108,8 +116,8 @@ with(myscallops, {
 
 Analisi 3D:
 
-```{r}
-require(scatterplot3d)
+```{r message=FALSE}
+library(scatterplot3d)
 ```
 
 ```{r}
@@ -120,9 +128,12 @@ s3d<-scatterplot3d(myscallops$long, myscallops$lat, myscallops$lgcatch,
 
 Con GeoR:
 
-```{r}
+```{r message=F}
 library(geoR)		# carica il pacchetto geoR
+```
 
+
+```{r}
 obj <- cbind(myscallops$long,myscallops$lat,myscallops$lgcatch)
 scallops.geo <- as.geodata(obj,coords.col=1:2,data.col=3)	# converte oggetto in classe geodata
 
@@ -158,11 +169,13 @@ points(griglia$x[ok], griglia$y[ok],cex=0.5)
 points(griglia$x[!ok], griglia$y[!ok], pch="x",cex=0.5,col="green")
 ```
 
-
-```{r}
+```{r message=F}
 library(gstat)
 library(maptools)
+```
 
+
+```{r}
 locazioni=data.frame(lon=myscallops$lon,lat=myscallops$lat,lgcatch=myscallops$lgcatch)
 coordinates(locazioni)=c("lon","lat")
 coordinates(griglia) = ~x+y

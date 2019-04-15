@@ -1,0 +1,176 @@
+---
+title: "Tema d'esame 27.04.2017"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Esercizio 1
+
+considerare la variabile PH e le coordinate dei punti di misura contenute in soja98 della libreria geoR.
+
+**1) calcolare il variogramma empirico della variabile PH usando 20 distanze:**
+
+```{r message=FALSE}
+library(geoR)
+```
+
+```{r}
+d <- soja98[,c("X","Y","PH")]
+d.geo <- as.geodata(d, coords.col = 1:2, data.col = 3)
+plot(d.geo)
+v.geo <- variog(d.geo,	estimator.type="classical", uvec=20)
+plot(v.geo, type='o')
+v.geo$n
+v.geo$u
+v.geo$v  
+```
+
+Il variogramma empirico mostra un nugget attorno a 0.1 (indice di una componente di variabilità spazialmente non strutturata) e un andamento monotono crescente - questo potrebbe voler significare la presenza di un trend da nord a sud (vedi grafico in cui si nota andamento decrescente in Y). La numerosità delle coppie diminuisce parecchio al crescere della varianza, per questo motivo i valori della coda di destra sono poco affidabili.
+
+**2) stimare il variogramma tramite un modello sferico e un modello esponenziale usando WLS con pesi cressie, max dist = 100 e inizializzando a 0.08 la soglia parziale, 0.07 il nugget e 100 il range**
+
+```{r}
+max.dist = 100
+v.geo = variog(d.geo,	estimator.type="classical", uvec=20, max.dist = max.dist)
+variofit.sph <- variofit(v.geo, ini.cov.pars=c(0.08,100), max.dist = max.dist,
+		    cov.model="spherical", fix.nugget=FALSE, nugget=0.07, weights = 'cressie')
+variofit.exp <- variofit(v.geo, ini.cov.pars=c(0.08,100), max.dist = max.dist,
+		    cov.model="exponential", fix.nugget=FALSE, nugget=0.07, weights = 'cressie')
+```
+
+Confronto:
+
+```{r}
+round(
+	  rbind(
+		  modello.sferico=c(summary(variofit.sph)$estimated.pars,
+		     range.effettivo=summary(variofit.sph)$practicalRange,
+	  	   SumSquares=summary(variofit.sph)$sum.of.squares)
+		  ,
+		  modello.esponenziale=c(summary(variofit.exp)$estimated.pars,
+		     range.effettivo=summary(variofit.exp)$practicalRange,
+		     SumSquares=summary(variofit.exp)$sum.of.squares)
+	   ),
+	  digits=2)
+```
+
+Decifrando:
+
+```{r}
+rbind(
+rbind(
+  c("modello","nugget", "soglia parziale", "soglia", "range"),
+  c("sferico", 0.07, 0.18, 0.25, 108.85)),
+  c("esponenziale", 0.07, 0.30, 0.36, 100.00))
+```
+
+Modello sferico:
+
+$$
+\text{Nugget relativo} = \dfrac{0.07}{0.07+0.18} = 0.28
+$$
+
+Il 28% della variabilità del modello è spiegata dalla componente "rumore" e quindi non è attribuibile alla struttura spaziale ma ad effetti locali spazialmente non strutturati.
+
+Modello esponenziale:
+
+$$
+\text{range} = \frac{\text{range effettivo}}{\log{20}}
+$$
+
+**3) riportare il grafico dei due modelli stimati e del variogramma empirico aggiungendo una legenda**
+
+```{r}
+plot(v.geo, type='l')
+	lines(variofit.sph,lwd=2, lty=2, col=2)
+	lines(variofit.exp,lwd=2, lty=3, col=3)
+	legend("bottomright",c("variogramma empirico","variogramma sferico","variogramma esponenziale"),
+	       col=c(1:3),lty=c(1:3))
+```
+
+**4) quale dei due modelli presenta un fit migliore?**
+
+Modello sferico presenta un SumSquares.value = 66.88
+
+Modello esponenziale presenta un SumSquares.value = 67.85
+
+Indi per cui il modello sferico è preferibile.
+
+
+## Esercizio 2
+
+Il file DeseaseMN.csv riporta dati relativi ad alcuni allevamenti della provincia di Mantova sottoposti ad un test sullo stato di salute del bestiame allevato. 
+
+**1) si rappresentino sulla carta gli allevamenti in cui si è manifestato l'evento come un processo di punto marcato con finestra data dallo shape file e marker dal fatto che l'allevamento sia risultato positivo, negativo o non abbia fornito l'esito del test**
+
+```{r message=FALSE}
+require(spatstat)
+require(maptools)
+require(rgdal)
+```
+
+```{r}
+d = read.csv('diseaseMN13.csv', sep=";")
+head(d)
+summary(d)
+W = readOGR('MN.shp', verbose = T)
+ppp = as.ppp(d[,c('EST','NORD','E_2013')], mark=d$E_2013, W=W)
+summary(ppp)
+plot(ppp, 'allevamenti provincia di mantova')
+```
+
+Coordinate cartografiche UTM (vedi valori `summary(d)`).
+
+**2) Si consideri solamente gli allevamenti con esito "Positivo". Considerando questo sottoinsieme di eventi si stimi l'intensità del processo rappresentante l'incidenza della malattia sul territorio supponendo che il processo di punto sia un processo di Poisson omogeneo e si interpreti il valore ottenuto.**
+
+```{r}
+d = d[d$E_2013=='Positivo',]
+head(d)
+area=2342560000
+(lambda=nrow(d)/area)
+```
+
+Per calcolare l'intensità in un processo di punto omogeneo si divide il numero di punti complessivi nella regione per la sua area. 
+
+Questo valore rappresenta la stima del numero atteso di casi positivi per unità di superficie.
+
+**3) Usando il sottoinsieme dei dati indicato al punto precedente si esegua un test per la CSR basato sulla distanza dal vicino più vicino. Si riportino su un grafico le curve rilevanti per l'analisi, gli inviluppi Montecarlo e un'opportuna legenda esplicativa. Si riporti sull'asse di ascissa la variabile in esso rappresentata tramite un'opportuna etichetta. Per l'analisi si eseguano 50 replicazioni Montecarlo fissando il seme della generazione casuale tramite il valore 1024. Si riporti il codice necessario all'analisi eseguita nei punti 2. e 3. e una breve interpretazione del risultato ottenuto.**
+
+```{r}
+set.seed(1024)
+envpp<-envelope(ppp,fun=Gest,nsim=50,verbose=TRUE,saveall=F)
+a = plot(envpp,main="inviluppo MC",xlab="distanza NN")
+```
+
+Alla luce del grafico precedente l'ipotesi di CSR appare ragionevolmente supportata dai dati in quanto la funzione di ripartizione empirica si trova ad ogni valore delle distanze
+all'interno degli inviluppi Monte Carlo, seguendo l'andamento della funzione di ripartizione teorica.
+
+**4) Aggiuntivo: grafico dell'intensità**
+
+```{r}
+Z <- density.ppp(ppp, varcov=diag( c(var(d$EST),var(d$NORD))/16))
+plot(Z,main="mappa dell'intensità kernel"); 
+plot(ppp,add=T,cex=0.4)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

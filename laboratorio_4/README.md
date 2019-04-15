@@ -1,3 +1,7 @@
+# Laboratorio 4
+
+
+
 Lettura dati:
 
 
@@ -5,17 +9,7 @@ Lettura dati:
 require(geoR)			# carica il pacchetto geoR
 ```
 
-```
-## Loading required package: geoR
-```
 
-```
-## --------------------------------------------------------------
-##  Analysis of Geostatistical Data
-##  For an Introduction to geoR go to http://www.leg.ufpr.br/geoR
-##  geoR version 1.7-5.2.1 (built on 2016-05-02) is now loaded
-## --------------------------------------------------------------
-```
 
 ```r
 dat.om<-soja98; str(dat.om)
@@ -70,7 +64,7 @@ soja.var <- variog(soja.geo, estimator.type="classical")
 plot(soja.var, main="variogramma empirico", type="o")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 Stima variogramma con WLS:
 
@@ -91,7 +85,7 @@ plot(soja.var, type="o")
 lines(soja.var.fit)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
 ```r
 a<-soja.var.fit$cov.pars
@@ -118,7 +112,7 @@ dim(griglia) #ordinate e ascisse dei 900 quadrati della griglia 30x30
 plot(griglia)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 non avendo uno shape, dobbiamo creare noi lo spazio in cui ci sono info
 
@@ -168,14 +162,14 @@ legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.or$predict,
 contour(krg.or,add=T,coords.data=soja.geo$coords,cex=0.3)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ```r
 # secondo grafico - 3d (persp)
 persp(krg.or,xlab="longitudine",ylab="latitudine",zlab="log-catch",ticktype="detailed")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
 
 In questi due grafici ho rappresentato la previsione con sfumature di colore / con un grafico 3d.
 
@@ -189,9 +183,9 @@ legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.or$krige.var,
 	)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
-Nel terzo grafico sto plottando la componente `krige.var` = varianze del kriging. mappa liscia, errore di previsione molto basso; i siti di previsione coprono in modo abbastanza omogeneo la superficie da prevedere. dato che è un previsore esatto non c'è errore di previsione se prevedo sul sito di campionamento; il grigliato di previsione molto simile ai punti campionari. non ci sono zone distanti dai punti campionati in cui avremmo errore più alto.
+Nel terzo grafico sto plottando la componente `krige.var` = varianze del kriging. mappa liscia, errore di previsione molto basso; i siti di previsione coprono in modo abbastanza omogeneo la superficie da prevedere. dato che Ã¨ un previsore esatto non c'è errore di previsione se prevedo sul sito di campionamento; il grigliato di previsione molto simile ai punti campionari. non ci sono zone distanti dai punti campionati in cui avremmo errore più alto.
 
 
 ```r
@@ -199,7 +193,7 @@ Nel terzo grafico sto plottando la componente `krige.var` = varianze del kriging
 points.geodata(soja.geo,pt.divide="data.proportional")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 rappresentazione dei punti campionari usati per la stima, sono più grandi quanto più alto è il valore rilevato lì. possiamo vedere se è coerente con le previsioni fatte sulla base di quelle osservazioni.
 
@@ -237,7 +231,7 @@ plot(obj.var.u)
   lines(obj.var.fit.u)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 kriging universale (uk)
 
@@ -278,13 +272,13 @@ contour(krg.uk,add=T)
 points.geodata(soja.geo,pt.divide="quintiles", col=1:5,add.to.plot=T)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 ```r
 persp(krg.uk,xlab="X",ylab="Y",zlab="log-catch",ticktype="detailed")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-14-2.png)<!-- -->
 
 ```r
 image(krg.uk, val=sqrt(krg.uk$krige.var), main="kriging std. errors",
@@ -295,13 +289,13 @@ legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.uk$krige.var,
 )
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-13-3.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-14-3.png)<!-- -->
 
 ```r
 points.geodata(soja.geo,pt.divide="data.proportional")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-13-4.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-14-4.png)<!-- -->
 
 stima della media
   
@@ -337,7 +331,7 @@ date()	#--- ora inizio elaborazione
 ```
 
 ```
-## [1] "Sun Apr 14 22:14:14 2019"
+## [1] "Mon Apr 15 17:00:36 2019"
 ```
 
 ```r
@@ -361,7 +355,7 @@ date()	#--- ora fine elaborazione
 ```
 
 ```
-## [1] "Sun Apr 14 22:14:19 2019"
+## [1] "Mon Apr 15 17:00:41 2019"
 ```
 
 **Grafici**
@@ -371,7 +365,7 @@ date()	#--- ora fine elaborazione
 hist(xvalid.notrend$error,main="istogramma residui",xlab="residui")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 error residui di cross validazione centrati su 0
 
@@ -381,7 +375,7 @@ error residui di cross validazione centrati su 0
 plot(xvalid.notrend$data,xvalid.notrend$predicted,ylab="previsione",xlab="osservazioni")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 i dati disponibili verso le osservazioni previste sui siti campionari + correlazione tra osservati e previsti e ci fa piacere
 
@@ -390,16 +384,16 @@ i dati disponibili verso le osservazioni previste sui siti campionari + correlaz
 plot(xvalid.notrend$predicted,xvalid.notrend$error,ylab="residui",xlab="previsione")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
-valori previsti vs errori, sparpagliato, ci piace perche non c'e andamento diverso a seconda della risposta, no eteroschedasticità
+valori previsti vs errori, sparpagliato, ci piace perche non c'e andamento diverso a seconda della risposta, no eteroschedasticitÃ 
 
 
 ```r
 plot(xvalid.notrend$data,xvalid.notrend$error,ylab="residui",xlab="osservazioni")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 residui vs osservazioni, ci aspetteremmo che i residui siano belli sparpagliati, indipendentemente da ciò che osservo l'errore è casuale, kriging invece sottostima valori all'estremo inferiore e sovrastima valori piccoli; non ci sorprende perchè la var del kriging comprime la varianza, dove ho alta var il krig tende a ridurla e viceversa (effetto di smoothing che mi aspetterei)
 
@@ -413,13 +407,13 @@ points.geodata(coords=soja.geo$coords,data=xvalid.notrend$error,main="mappa dei 
 text(x=soja.geo$coords, labels=round(xvalid.notrend$error,2),cex=0.7,col=2,adj=c(0,1))
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 per ogni sito campionario valore del residuo,  pallino più grande quanto più è grande il residuo; utile per capire dove sulla mappa si fanno gli errori.  dove osservo pallini grandi so che la previsione in quella regione è particolarmente distorta. i residui si possono riportare sulla mappa, utile! dove l'errore è piccolo posso anche buttare via l'osservazione. dove è alto no, l'osservazione è utile perchè se la tolgo sbaglio molto
   
 **cv per valutare previsioni**
 
-si può usare per confrontare modelli alternativi anche  misure di fit 
+si puÃ² usare per confrontare modelli alternativi anche  misure di fit 
 
 
 ```r
@@ -472,29 +466,19 @@ cov.pars=vario.fit$cov.pars #salvo output
 lines(vario.fit)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 Lettura shape
 
 
 ```r
 library(maptools)
+library(ggplot2)
 ```
 
-```
-## Loading required package: sp
-```
 
-```
-## Checking rgeos availability: FALSE
-##  	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
-##  	which has a restricted licence. It is disabled by default;
-##  	to enable gpclib, type gpclibPermit()
-```
 
 ```r
-library(ggplot2)
-
 # ricodifica del bordo come matrice  serve in krige.conv  
 poly<-readShapePoly("acquif.shp",verbose=TRUE) 
 ```
@@ -511,7 +495,7 @@ poly<-readShapePoly("acquif.shp",verbose=TRUE)
 plot(poly,col="lightblue")
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ```r
 poligono <- fortify(poly)
@@ -529,13 +513,13 @@ p=as.matrix(poligono[,c("long","lat")])
 ```
 
 costruisco matrice coordinate
-griglia e kriging stessa già usata prima
+griglia e kriging stessa giÃ  usata prima
 
 
 ```r
 X=bbox(poly)[1,]
 Y=bbox(poly)[2,]
-size=100 #con 500 pixel più precisi
+size=100 #con 500 pixel piÃ¹ precisi
 YY<-round(seq(ceiling(min(Y)),floor(max(Y)), length=size),2)
 XX<-round(seq(ceiling(min(X)),floor(max(X)), length=size),2)
 griglia<-expand.grid(X=XX,Y=YY)
@@ -551,7 +535,7 @@ plot(poly)
 points(griglia,cex=0.1)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 la griglia si sovrappone alla regione di interesse; 
 
@@ -583,7 +567,7 @@ contour(krg.or,add=T,coords.data=a$coords,cex=0.3)
 points.geodata(obj,add=T,pt.divide="quintiles", col=1:5)
 ```
 
-![](laboratorio_4_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](laboratorio_4_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 
 

@@ -11,8 +11,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Lettura dati:
 
-```{r}
+```{r message=F}
 require(geoR)			# carica il pacchetto geoR
+```
+
+
+```{r}
 dat.om<-soja98; str(dat.om)
 obj <- dat.om[,c("X","Y","MO")]
 summary(obj)
@@ -99,7 +103,7 @@ legend.krige(x.leg=c(-13,-8), y.leg=c(30,100), val=krg.or$krige.var,
 	)
 ```
 
-Nel terzo grafico sto plottando la componente `krige.var` = varianze del kriging. mappa liscia, errore di previsione molto basso; i siti di previsione coprono in modo abbastanza omogeneo la superficie da prevedere. dato che è un previsore esatto non c'è errore di previsione se prevedo sul sito di campionamento; il grigliato di previsione molto simile ai punti campionari. non ci sono zone distanti dai punti campionati in cui avremmo errore più alto.
+Nel terzo grafico sto plottando la componente `krige.var` = varianze del kriging. mappa liscia, errore di previsione molto basso; i siti di previsione coprono in modo abbastanza omogeneo la superficie da prevedere. dato che Ã¨ un previsore esatto non c'è errore di previsione se prevedo sul sito di campionamento; il grigliato di previsione molto simile ai punti campionari. non ci sono zone distanti dai punti campionati in cui avremmo errore più alto.
 
 ```{r}
 # quarto grafico
@@ -209,7 +213,7 @@ i dati disponibili verso le osservazioni previste sui siti campionari + correlaz
 plot(xvalid.notrend$predicted,xvalid.notrend$error,ylab="residui",xlab="previsione")
 ```
 
-valori previsti vs errori, sparpagliato, ci piace perche non c'e andamento diverso a seconda della risposta, no eteroschedasticità
+valori previsti vs errori, sparpagliato, ci piace perche non c'e andamento diverso a seconda della risposta, no eteroschedasticitÃ 
 
 ```{r}
 plot(xvalid.notrend$data,xvalid.notrend$error,ylab="residui",xlab="osservazioni")
@@ -230,7 +234,7 @@ per ogni sito campionario valore del residuo,  pallino più grande quanto più �
   
 **cv per valutare previsioni**
 
-si può usare per confrontare modelli alternativi anche  misure di fit 
+si puÃ² usare per confrontare modelli alternativi anche  misure di fit 
 
 ```{r}
 cor(xvalid.notrend$data,xvalid.notrend$predicted)
@@ -257,10 +261,13 @@ lines(vario.fit)
 
 Lettura shape
 
-```{r}
+```{r message=F}
 library(maptools)
 library(ggplot2)
+```
 
+
+```{r}
 # ricodifica del bordo come matrice  serve in krige.conv  
 poly<-readShapePoly("acquif.shp",verbose=TRUE) 
 plot(poly,col="lightblue")
@@ -272,12 +279,12 @@ p=as.matrix(poligono[,c("long","lat")])
 ```
 
 costruisco matrice coordinate
-griglia e kriging stessa già usata prima
+griglia e kriging stessa giÃ  usata prima
 
 ```{r}
 X=bbox(poly)[1,]
 Y=bbox(poly)[2,]
-size=100 #con 500 pixel più precisi
+size=100 #con 500 pixel piÃ¹ precisi
 YY<-round(seq(ceiling(min(Y)),floor(max(Y)), length=size),2)
 XX<-round(seq(ceiling(min(X)),floor(max(X)), length=size),2)
 griglia<-expand.grid(X=XX,Y=YY)

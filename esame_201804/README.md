@@ -1,70 +1,18 @@
-# esame_201804
+# Esame Aprile 2018
 
+## Esercizio 1
 
 ```r
 require(geoR)
-```
-
-```
-## Loading required package: geoR
-```
-
-```
-## --------------------------------------------------------------
-##  Analysis of Geostatistical Data
-##  For an Introduction to geoR go to http://www.leg.ufpr.br/geoR
-##  geoR version 1.7-5.2.1 (built on 2016-05-02) is now loaded
-## --------------------------------------------------------------
-```
-
-```r
 require(maptools)
-```
-
-```
-## Loading required package: maptools
-```
-
-```
-## Loading required package: sp
-```
-
-```
-## Checking rgeos availability: FALSE
-##  	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
-##  	which has a restricted licence. It is disabled by default;
-##  	to enable gpclib, type gpclibPermit()
-```
-
-```r
 require(rgdal)
 ```
-
-```
-## Loading required package: rgdal
-```
-
-```
-## rgdal: version: 1.4-3, (SVN revision 828)
-##  Geospatial Data Abstraction Library extensions to R successfully loaded
-##  Loaded GDAL runtime: GDAL 2.2.3, released 2017/11/20
-##  Path to GDAL shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/gdal
-##  GDAL binary built with GEOS: TRUE 
-##  Loaded PROJ.4 runtime: Rel. 4.9.3, 15 August 2016, [PJ_VERSION: 493]
-##  Path to PROJ.4 shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/proj
-##  Linking to sp version: 1.3-1
-```
-
-```r
-d <- read.csv('datind.csv', sep = ';')
-```
-
-## Esercizio 1
 
 **1) Si descriva sinteticamente il dataset:**
 
 
 ```r
+d <- read.csv('datind.csv', sep = ';')
 str(d)
 ```
 
@@ -291,37 +239,12 @@ predict(m,g)+krg$predict
 ```r
 require(rgdal)
 require(spatstat)
+require(maptools)
 ```
 
-```
-## Loading required package: spatstat
-```
 
-```
-## Loading required package: spatstat.data
-```
-
-```
-## Loading required package: nlme
-```
-
-```
-## Loading required package: rpart
-```
-
-```
-## 
-## spatstat 1.59-0       (nickname: 'J'ai omis les oeufs de caille') 
-## For an introduction to spatstat, type 'beginner'
-```
-
-```
-## 
-## Note: R version 3.4.4 (2018-03-15) is more than 9 months old; we strongly recommend upgrading to the latest version
-```
 
 ```r
-require(maptools)
 lomb.poly <- readOGR("Lombardia_UTMWGS84.shp", verbose=T)
 ```
 
@@ -340,7 +263,7 @@ ppp = as.ppp(d,W=lomb.poly)
 plot(ppp, main='lombardia aziende')
 ```
 
-![](esame_201804_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](esame_201804_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 **2) Si valuti l'ipotesi di un test CSR con un opportuno test grafico. Si producano gli sviluppi MC utilizzando 25 iter e settando il seed 1804**
 
@@ -350,7 +273,7 @@ qx<-quadratcount(ppp,10,10)	### tabella 4x4
 plot(qx)
 ```
 
-![](esame_201804_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](esame_201804_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
 set.seed(1804)
@@ -368,7 +291,7 @@ envpp<-envelope(ppp,fun=Gest,nsim=25,nrank=,verbose=TRUE,saveall=F)
 a = plot(envpp,main="inviluppo MC",xlab="y")
 ```
 
-![](esame_201804_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
+![](esame_201804_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 Dal test grafico si osserva che la funzione di rip. empirica è contenuta nelle bande degli inviluppi, salvo piccoli discostamenti. Ciò fa propendere per l'accettazione dell'ipotesi che il processo sia un CSR, ovvero un processo di punto omogeneo. In tal caso NON è possibile ipotizzare un comportamento competitivo delle aziende sul territorio né la presenza di potenziali economie di scala derivanti dall'addensamento sul territorio di infrastrutture a supporto delle aziende; si può pensare anzi alla presenza di aziende distribuite sul territorio in situazione di concorrenza perfetta. 
 
@@ -381,7 +304,7 @@ plot(Z,main="mappa dell'intensità kernel");
 plot(ppp,add=T,cex=0.6,col="black")
 ```
 
-![](esame_201804_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](esame_201804_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 Avendo concluso che l'ipotesi di CSR fosse compatibile coi dati a disposizione, si è stimata l'intensità facendo rapporto tra la numerosità delle aziende sul territorio (100) e l'area della regione Lombardia
 
@@ -420,37 +343,3 @@ f = 1e+6
 ```
 
 Questo valore è il numero di aziende attese per 20kmq.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

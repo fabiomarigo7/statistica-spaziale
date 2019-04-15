@@ -120,35 +120,14 @@ $(document).ready(function () {
 </div>
 
 
-<pre class="r"><code>require(geoR)</code></pre>
-<pre><code>## Loading required package: geoR</code></pre>
-<pre><code>## --------------------------------------------------------------
-##  Analysis of Geostatistical Data
-##  For an Introduction to geoR go to http://www.leg.ufpr.br/geoR
-##  geoR version 1.7-5.2.1 (built on 2016-05-02) is now loaded
-## --------------------------------------------------------------</code></pre>
-<pre class="r"><code>require(maptools)</code></pre>
-<pre><code>## Loading required package: maptools</code></pre>
-<pre><code>## Loading required package: sp</code></pre>
-<pre><code>## Checking rgeos availability: FALSE
-##      Note: when rgeos is not available, polygon geometry     computations in maptools depend on gpclib,
-##      which has a restricted licence. It is disabled by default;
-##      to enable gpclib, type gpclibPermit()</code></pre>
-<pre class="r"><code>require(rgdal)</code></pre>
-<pre><code>## Loading required package: rgdal</code></pre>
-<pre><code>## rgdal: version: 1.4-3, (SVN revision 828)
-##  Geospatial Data Abstraction Library extensions to R successfully loaded
-##  Loaded GDAL runtime: GDAL 2.2.3, released 2017/11/20
-##  Path to GDAL shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/gdal
-##  GDAL binary built with GEOS: TRUE 
-##  Loaded PROJ.4 runtime: Rel. 4.9.3, 15 August 2016, [PJ_VERSION: 493]
-##  Path to PROJ.4 shared files: C:/Users/fabio/Documents/R/win-library/3.4/rgdal/proj
-##  Linking to sp version: 1.3-1</code></pre>
-<pre class="r"><code>d &lt;- read.csv('datind.csv', sep = ';')</code></pre>
+<pre class="r"><code>require(geoR)
+require(maptools)
+require(rgdal)</code></pre>
 <div id="esercizio-1" class="section level2">
 <h2>Esercizio 1</h2>
 <p><strong>1) Si descriva sinteticamente il dataset:</strong></p>
-<pre class="r"><code>str(d)</code></pre>
+<pre class="r"><code>d &lt;- read.csv('datind.csv', sep = ';')
+str(d)</code></pre>
 <pre><code>## 'data.frame':    119 obs. of  3 variables:
 ##  $ index: num  0.042342 0.233349 1.419507 1.716106 0.000788 ...
 ##  $ long : num  511020 512282 513006 514949 510260 ...
@@ -276,18 +255,9 @@ krg = krige.conv(data.geol, loc=g,
 <h2>Esercizio 2</h2>
 <p><strong>1) Definire un point pattern formato dalle locazioni delle aziende usando i confini amministrativi della Lombardia come finestra del processo</strong></p>
 <pre class="r"><code>require(rgdal)
-require(spatstat)</code></pre>
-<pre><code>## Loading required package: spatstat</code></pre>
-<pre><code>## Loading required package: spatstat.data</code></pre>
-<pre><code>## Loading required package: nlme</code></pre>
-<pre><code>## Loading required package: rpart</code></pre>
-<pre><code>## 
-## spatstat 1.59-0       (nickname: 'J'ai omis les oeufs de caille') 
-## For an introduction to spatstat, type 'beginner'</code></pre>
-<pre><code>## 
-## Note: R version 3.4.4 (2018-03-15) is more than 9 months old; we strongly recommend upgrading to the latest version</code></pre>
-<pre class="r"><code>require(maptools)
-lomb.poly &lt;- readOGR(&quot;Lombardia_UTMWGS84.shp&quot;, verbose=T)</code></pre>
+require(spatstat)
+require(maptools)</code></pre>
+<pre class="r"><code>lomb.poly &lt;- readOGR(&quot;Lombardia_UTMWGS84.shp&quot;, verbose=T)</code></pre>
 <pre><code>## OGR data source with driver: ESRI Shapefile 
 ## Source: &quot;C:\Users\fabio\Documents\github repos\statistica-spaziale\esame_201804\Lombardia_UTMWGS84.shp&quot;, layer: &quot;Lombardia_UTMWGS84&quot;
 ## with 1 features

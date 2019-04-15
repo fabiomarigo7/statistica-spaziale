@@ -5,11 +5,10 @@ output:
     keep_md: true
 ---
 
-```{r, results=F}
+```{r message=FALSE}
 require(geoR)
 require(maptools)
 require(rgdal)
-d <- read.csv('datind.csv', sep = ';')
 ```
 
 ## Esercizio 1
@@ -17,6 +16,7 @@ d <- read.csv('datind.csv', sep = ';')
 **1) Si descriva sinteticamente il dataset:**
 
 ```{r}
+d <- read.csv('datind.csv', sep = ';')
 str(d)
 summary(d)
 ```
@@ -101,10 +101,14 @@ predict(m,g)+krg$predict
 
 **1) Definire un point pattern formato dalle locazioni delle aziende usando i confini amministrativi della Lombardia come finestra del processo**
 
-```{r}
+```{r message=FALSE}
 require(rgdal)
 require(spatstat)
 require(maptools)
+```
+
+
+```{r}
 lomb.poly <- readOGR("Lombardia_UTMWGS84.shp", verbose=T)
 d <- read.csv("aziende.csv", sep=';')
 ppp = as.ppp(d,W=lomb.poly)
@@ -144,37 +148,3 @@ f = 1e+6
 ```
 
 Questo valore è il numero di aziende attese per 20kmq.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

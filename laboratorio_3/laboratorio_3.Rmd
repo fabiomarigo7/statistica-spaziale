@@ -9,17 +9,19 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r message=F}
+require(geoR)
+```
 
 
 ```{r}
-require(geoR)
 dat.om<-soja98
 str(dat.om) 		# numero di osservazioni e variabili 
 summary(dat.om)	# descrittive per ogni variabile nel data set
 d1<-obj <- dat.om[,c("X","Y","MO")];	summary(obj)
 ```
 
-La variabile MO ha un campo di variazione limitato, con moda e mediana vicini, si pu√≤ supporre simmetria e non sembrano esserci outliers.
+La variabile MO ha un campo di variazione limitato, con moda e mediana vicini, si puÚ supporre simmetria e non sembrano esserci outliers.
 
 Preparazione dati per GeoR:
 
@@ -30,7 +32,7 @@ plot(dat.om.geo)
 
 Risulta una tendenza da sud a nord che aumenta la concentrazione. Potrebbe esserci componente di larga scala, anisotropia.
 
-## Analisi variabilit√† di piccola scala
+## Analisi variabilit‡ di piccola scala
 
 **Nuvola del variogramma**
 
@@ -40,7 +42,7 @@ plot(variog(dat.om.geo, estimator.type="classical",option="cloud"),cex=0.4)
 
 In ascissa stiamo plottando le distanze, in ordinata la differenza tra le Y. 
 
-Non ci d√† particolari informazioni, vediamo solo che cresce un po' aumentando la distanza. Potrebbe quindi esserci un trend.
+Non ci d‡ particolari informazioni, vediamo solo che cresce un po' aumentando la distanza. Potrebbe quindi esserci un trend.
 
 **Variogramma empirico**
 
@@ -66,7 +68,7 @@ plot(dat.om.var,main="variogramma empirico",ylim=c(0,110));
 plot(dat.om.var.robust,main="variogramma robusto",ylim=c(0,110))
 ```
 
-I due output sono pressoch√© identici nel lato che ci interessa poich√© non ci sono outlier evidenti.
+I due output sono pressochË identici nel lato che ci interessa poichË non ci sono outlier evidenti.
 
 Lisciamento kernel del variogramma:
 
@@ -89,7 +91,7 @@ plot(vario.a, type="l", ylim=c(0,80))
 
 Posso pensare che la soglia del variogramma sia circa 45, mentre il range potrebbe essere in corrispondenza della distanza 100.
 
-Il nugget posso ipotizzare sia intorno a 20: il fenomeno risulta essere non molto disturbato dal rumore, infatti quasi la met√† della variabilit√† (20/40) √® dovuta al white noise, ovvero la componente di errore.
+Il nugget posso ipotizzare sia intorno a 20: il fenomeno risulta essere non molto disturbato dal rumore, infatti quasi la met‡ della variabilitË (20/40) Ë dovuta al white noise, ovvero la componente di errore.
 
 **Variogrammi direzionali**
 
@@ -115,19 +117,19 @@ legend("topleft", cex=0.8,
 				expression(135 * degree)), lty=c(1:5),col=1:5)
 ```
 
-Le stime nei variogrammi sono molto pi√π variabili, in quanto la numerosit√† √® molto pi√π bassa.
+Le stime nei variogrammi sono molto pi˘ variabili, in quanto la numerositË Ë molto pi˘ bassa.
 
 Tutti i variog direzionali tranne quello blu, presentano una crescita con l'aumentare della distanza.
 
 Questo vuol dire che molto probabilmente sussiste un trend, di direzione nord sud (come si era visto sopra in un altro grafico).
 
-Il variog rosso decresce. Questo pu√≤ essere dato da una numerosit√† molto bassa negli ultimi bin. 
+Il variog rosso decresce. Questo puÚ essere dato da una numerositË molto bassa negli ultimi bin. 
 
-Per vedere il processo al netto del trend si pu√≤ osservare il variogramma direzionale est-overt (ortogonale al trend!).
+Per vedere il processo al netto del trend si puÚ osservare il variogramma direzionale est-overt (ortogonale al trend!).
 
-Un modo per trattare il trend √® il seguente: 
+Un modo per trattare il trend Ë il seguente: 
 
-* stimo componente di larga scala OLS (polinomio max 3¬∞ grado)
+* stimo componente di larga scala OLS (polinomio max 3 grado)
 * tolgo componente di larga scala
 * stimo variogramma empirico sui residui della regressione senza larga scala
 
@@ -149,7 +151,7 @@ plot(variog(
 
 `res=residuals(lm(obj$MO~obj$Y)))` --> dati su cui faccio il variogramma, prendo i residui di una regressione lineare in direzione Y, l'unica dove ho visto esserci un trend.
 
-`obj[,1,2]` --> prendo le prime due colonne, le coordinate, e ci aggiungo `res`, che √® la variabile risposta del variog.
+`obj[,1,2]` --> prendo le prime due colonne, le coordinate, e ci aggiungo `res`, che Ë la variabile risposta del variog.
 
 **Esercizio** Detrendizzare manualmente i dati con un trend di primo grado in X e Y e costruire il variog dei residui 
 
@@ -158,7 +160,7 @@ plot(variog(as.geodata(obj=data.frame(obj[,1:2],res=residuals(lm(obj$MO~obj$Y+ob
                        coords.col=1:2,data.col=3), uvec=20),ylim=c(0,60))
 ```
 
-Detrendizzando rispetto a tutte e due le coordinate viene uguale perch√© X non √® significativa:
+Detrendizzando rispetto a tutte e due le coordinate viene uguale perchË X non Ë significativa:
 
 ```{r}
 summary(lm(obj$MO~obj$Y+obj$X))
@@ -208,7 +210,7 @@ lines.variomodel(cov.model = "exp", cov.pars = c(25,35), nug =20,
 abline(h=45)
 ```
 
-0.95*soglia = secondo elemento di cov.pars perch√® la soglia √® un asintoto orizzontale, in questo caso il range
+0.95*soglia = secondo elemento di cov.pars perchË la soglia Ë un asintoto orizzontale, in questo caso il range
 
 NB: io specifico come primo parametro di cov.pars la soglia parziale. quindi soglia effettiva = parziale + nugget = 45
 
@@ -249,7 +251,7 @@ summary(dat.om.var.fit)
 
 `nugget.component` = stima per il nugget
 
-`practicalRange` = stima del range quando la soglia √® asintotica = 0.95*soglia
+`practicalRange` = stima del range quando la soglia Ë asintotica = 0.95*soglia
 
 ```{r}
 dat.om.var.fit$cov.pars  # stima di  soglia parziale e range 
@@ -393,7 +395,7 @@ col=c(1:3),lty=c(1:3))
 ```
 
 
-## Valutazione della variabilit√† del variogramma tramite MonteCarlo e test grafici via permutazione
+## Valutazione della variabilit‡ del variogramma tramite MonteCarlo e test grafici via permutazione
 
 Idea: si simulano campioni da traettorie di struttura nota, fissando i parametri del variog ai valori stimati (wls) e si calcolano i variog empirici su dati simulati
 
@@ -425,7 +427,7 @@ for(i in 1:4){
     }
 ```
 
-valutazione della variabilit√† del variogramma
+valutazione della variabilit‡ del variogramma
 
 ```{r}
 par(mfrow=c(1,1))
@@ -441,29 +443,3 @@ valutazione della correlazione spaziale - test grafico via permutazione
 dat.om.env <- variog.mc.env(dat.om.geo, obj.var = dat.om.var,save.sim=T)	
   plot(dat.om.var, envelope = dat.om.env)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

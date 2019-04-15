@@ -1,3 +1,7 @@
+# Laboratorio 2
+
+
+
 ## Lettura, preparazione ed esplorazione "non spaziale" dei dati
 
 
@@ -104,17 +108,22 @@ Libreria "maps":
 
 ```r
 library(maps)					# carica libreria per mappe
+```
+
+
+
+```r
 map("usa")						# mappa degli USA- data set in R
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 ```r
 map("usa",fill=T,col=3, xlim=c(-78,-65), ylim=c(38.2,41.5))
 points(myscallops$long, myscallops$lat,cex=0.8)	# aggiunge punti
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-6-2.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-7-2.png)<!-- -->
 
 Libreria "spatstat":
 
@@ -123,28 +132,7 @@ Libreria "spatstat":
 library(spatstat)
 ```
 
-```
-## Loading required package: spatstat.data
-```
 
-```
-## Loading required package: nlme
-```
-
-```
-## Loading required package: rpart
-```
-
-```
-## 
-## spatstat 1.59-0       (nickname: 'J'ai omis les oeufs de caille') 
-## For an introduction to spatstat, type 'beginner'
-```
-
-```
-## 
-## Note: R version 3.4.4 (2018-03-15) is more than 9 months old; we strongly recommend upgrading to the latest version
-```
 
 ```r
 celle=4	
@@ -156,7 +144,7 @@ qx<-quadratcount(X,celle,celle)	### tabella size x size
 plot(qx,add=T)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 Statistiche locali
 
@@ -202,28 +190,28 @@ m
 plot(varianza~media,m); abline(lm(varianza~media,m),col=2)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ```r
 plot(m$varianza,ylab="varianza"); abline(h=var(temp$lgcatch),col=2)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-8-2.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
 
-## Esplorazione per la stazionarietà di larga scala (in media)
+## Esplorazione per la stazionarietÃ  di larga scala (in media)
 
 
 ```r
 plot(lgcatch~lat,data=myscallops, ylab="trasformata conteggi",xlab="latitudine")
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ```r
 plot(lgcatch~long,data=myscallops, ylab="trasformata conteggi",xlab="longitudine")
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-9-2.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-11-2.png)<!-- -->
 
 Linea di tendenza via kernel:
 
@@ -237,17 +225,13 @@ with(myscallops, {
     })
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-10-1.png)<!-- -->![](laboratorio_2_files/figure-html/unnamed-chunk-10-2.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->![](laboratorio_2_files/figure-html/unnamed-chunk-12-2.png)<!-- -->
 
 Analisi 3D:
 
 
 ```r
-require(scatterplot3d)
-```
-
-```
-## Loading required package: scatterplot3d
+library(scatterplot3d)
 ```
 
 
@@ -257,7 +241,7 @@ s3d<-scatterplot3d(myscallops$long, myscallops$lat, myscallops$lgcatch,
                       col.grid="lightblue", pch=20,type="h")
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 Con GeoR:
 
@@ -266,13 +250,7 @@ Con GeoR:
 library(geoR)		# carica il pacchetto geoR
 ```
 
-```
-## --------------------------------------------------------------
-##  Analysis of Geostatistical Data
-##  For an Introduction to geoR go to http://www.leg.ufpr.br/geoR
-##  geoR version 1.7-5.2.1 (built on 2016-05-02) is now loaded
-## --------------------------------------------------------------
-```
+
 
 ```r
 obj <- cbind(myscallops$long,myscallops$lat,myscallops$lgcatch)
@@ -323,24 +301,24 @@ head(scallops.geo$data);  head(scallops.geo$coords)
 points.geodata(scallops.geo,pt.divide="quintiles", col=1:5,xlim=c(-75,-71.1), ylim=c(38.2,41.5))
 
 legend(-72.4, 39.5, pch=19, col=1:5, pt.cex=(1:5)/3,
-    c("1° quintile","2° quintile","3° quintile","4° quintile","5° quintile"))
+    c("1Â° quintile","2Â° quintile","3Â° quintile","4Â° quintile","5Â° quintile"))
 plot(w,add=T)
 map("usa",fill=T,col=3, xlim=c(-78,-65), ylim=c(38.2,41.5),add=T)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 ```r
 plot.geodata(scallops.geo,scatter3d = FALSE)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-13-2.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-16-2.png)<!-- -->
 
 ```r
 plot.geodata(scallops.geo,scatter3d = TRUE, lowess=T)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-13-3.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-16-3.png)<!-- -->
 
 ## Analisi esplorativa di larga scala tramite superfici 
 
@@ -361,7 +339,7 @@ gr<-griglia<-expand.grid(x=x,y=y); dim(griglia)
 plot(w,xlab="longitudine",ylab="latitudine"); points(griglia)
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 Si identificano i punti griglia dentro l'involucro convesso:
 
@@ -372,39 +350,15 @@ points(griglia$x[ok], griglia$y[ok],cex=0.5)
 points(griglia$x[!ok], griglia$y[!ok], pch="x",cex=0.5,col="green")
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
-
+![](laboratorio_2_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 
 ```r
 library(gstat)
-```
-
-```
-## 
-## Attaching package: 'gstat'
-```
-
-```
-## The following object is masked from 'package:spatstat':
-## 
-##     idw
-```
-
-```r
 library(maptools)
 ```
 
-```
-## Loading required package: sp
-```
 
-```
-## Checking rgeos availability: FALSE
-##  	Note: when rgeos is not available, polygon geometry 	computations in maptools depend on gpclib,
-##  	which has a restricted licence. It is disabled by default;
-##  	to enable gpclib, type gpclibPermit()
-```
 
 ```r
 locazioni=data.frame(lon=myscallops$lon,lat=myscallops$lat,lgcatch=myscallops$lgcatch)
@@ -433,14 +387,14 @@ plot(w,border="gray",add=T,lwd=3)
 map("usa", add=T, xlim=c(-74,-71), ylim=c(38.2,41.5),fill=T,col=3,	xlab="longitudine",ylab="latitudine")	
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ```r
 persp(int.scp,xlab="longitudine",ylab="latitudine",zlab="lgcatch",
 		      expand=1,theta=30,phi=20,ticktype="detailed" )		
 ```
 
-![](laboratorio_2_files/figure-html/unnamed-chunk-16-2.png)<!-- -->
+![](laboratorio_2_files/figure-html/unnamed-chunk-20-2.png)<!-- -->
 
 
 
