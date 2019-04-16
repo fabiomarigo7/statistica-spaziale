@@ -1,0 +1,214 @@
+---
+title: "Esame Giugno 2017"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Esercizio 1
+
+File `dat.csv` contiene i dati.
+
+I file PE.shp, PE.shx, PE.dbf riportano i confini geografici della regione di studio a cui i dati sono riferiti che rappresenta un bacino collocato in una regione italiana.
+
+**1) Si esegua una sintetica analisi esplorativa dei dati, evidenziandone le caratteristiche principali. Si dica quale potrebbe essere il sistema di riferimento geografico utilizzato e il significato delle coordinate dei punti di misura.**
+
+```{r message=F}
+library(geoR)
+library(spatstat)
+library(rgdal)
+library(maptools)
+library(ggplot2)
+```
+
+```{r}
+d = read.csv('dat.csv', sep=';')
+head(d)
+summary(d)
+d.geo = as.geodata(d, coords.col = 1:2, data.col = 3)
+plot(d.geo, lowess = T, scatter3d = T)
+```
+
+Non sembrano esserci evidenze di trend né nella direzione Nord-Sud né Est-Ovest. Tuttavia si può osservare un outlier molto evidente. Le coordinate sono cartografiche, con codifica Gauss-Boaga.
+
+Mappa:
+
+```{r}
+poly = readOGR('PE.shp', verbose=T)
+par(cex=0.8)
+points(d.geo,pt.divide="quintiles", col=1:5, main='mappa')
+plot(poly, add=T)
+legend('bottomright', pch=19, col=1:5, pt.cex=(1:5)/3,
+       c("1° quintile","2° quintile","3° quintile","4° quintile","5° quintile"))
+```
+
+**2) Si calcoli il variogramma empirico della variabile “valori” usando 16 distanze (bin) per la sua costruzione. Se ne produca il grafico e si trascrivano, negli spazi sotto riportati, i valori del variogramma empirico e i valori delle corrispondenti distanze, approssimati al primo decimale. Si discuta sinteticamente come sono trattate eventuali inconsistenze nei dati**
+
+```{r}
+v.geo = variog(d.geo, uvec = 16)
+plot(v.geo, type='o', pch=19)
+round(v.geo$u,1) # distanze
+round(v.geo$v,1) # valori
+```
+
+Provo a togliere l'outlier:
+
+```{r}
+par(cex=0.6)
+plot(d$x, d$y, col='white')
+text(d$x, d$y, labels = 1:90)
+d2 = d[-1,]
+d2.geo = as.geodata(d2, coords.col = 1:2, data.col = 3)
+plot(d2.geo, lowess = T, scatter3d = T)
+par(cex=0.8)
+points(d2.geo,pt.divide="quintiles", col=1:5, main='mappa')
+plot(poly, add=T)
+legend('bottomright', pch=19, col=1:5, pt.cex=(1:5)/3,
+       c("1° quintile","2° quintile","3° quintile","4° quintile","5° quintile"))
+```
+
+Avendo tolto l'outlier sembrano emergere dei lievi trend sia NS sia EO.
+
+```{r}
+v.geo = variog(d2.geo, uvec = 16)
+plot(v.geo, type='o', pch=19)
+round(v.geo$u,1) # distanze
+round(v.geo$v,1) # valori
+round(v.geo$n,1) # frequenze
+```
+
+
+Abbiamo rimosso l’outlier precedentemente identificato. Negli ultimi 5 bin ci sono meno di 100 coppie di osservazioni, quindi le stime potrebbero essere distorte: potremmo quindi andare a considerare una distanza max di 25000.
+
+Nugget=35 soglia=60 range=10000
+
+**3) Si esegua un’opportuna diagnostica grafica di tipo Monte Carlo per evidenziare se, nel dataset considerato, la dipendenza spaziale risulta significativamente rilevante oppure no. Si riporti e si commenti il grafico nello spazio predisposto. Ai fini dell’analisi Montecarlo si inizializzi la generazione casuale con il valore 17628 e si eseguano 80 simulazioni indipendenti per implementare la diagnostica.**
+
+```{r}
+set.seed(17628)
+d.env <- variog.mc.env(d2.geo, obj.v = v.geo, nsim = 80, save.sim=T)
+plot(v.geo, type='o', pch=19, envelope = d.env)
+```
+
+Come si evince dal grafico che raffronta il variogramma empirico con un situazione di assenza di dipendenza spaziale (situazione di nugget puro) abbiamo che il semivariogramma empirico va al di sotto e al di sopra delle bande riportate. Ciò evidenzia forte dipendenza spaziale. E’ importante guardare come si comporta a basse distanze, perché ovviamente nella “coda” di destra le stime sono instabili e non del tutto attendibili.
+
+**4) Si stimi il variogramma tramite un modello sferico usando i minimi quadrati ordinari, fissando la massima distanza a cui calcolare il variogramma empirico a 35000 e inizializzando la procedura con il valore 25 per la soglia parziale, 10 per il nugget e 5000 per il range. Si riportino i valori stimati dei parametri: range, soglia e nugget. Si calcoli il nugget relativo in termini percentuali interpretando sinteticamente il valore ottenuto. Si scriva l’equazione del modello di semivariogramma stimato. Si riportino tutti i valori approssimati al primo decimale.**
+
+```{r}
+m = 35000
+v.geo = variog(d2.geo, uvec = 16, max.dist = m)
+
+v.fit.ols = variofit(v.geo,
+	  	ini.cov.pars=c(25,5000),
+		  cov.model="spherical", fix.nugget=FALSE,nugget=10, weights = "equal")
+# summary(v.fit.ols)
+(range = round(v.fit.ols$practicalRange,1))
+(nugget = round(v.fit.ols$nugget,1))
+(soglia = round(28.42377,1))
+(nugget.rel = round(nugget/(nugget+soglia),1))
+```
+
+Equazione del modello:
+
+$$
+\gamma(h)=27.8+28.4\biggl( 1.5\frac{h}{13643.4} - 0.5\frac{h}{13643.4}^3 \biggr) 
+$$
+se $0<h<1.5<13643.4$. Altrimenti $\gamma(h)=56.2$
+
+**5) Si riporti il grafico del modello stimato e del variogramma empirico.**
+
+```{r}
+plot(v.geo, type='o')
+lines(v.fit.ols, col=2, lwd=2, lty=2)
+legend("bottomright",c("variogramma empirico","variogramma sferico - OLS"),
+      col=c(1:2),lty=c(1:2), lwd=c(1:2))
+```
+
+**6) Usando le stime ottenute al punto 4, si riporti nello spazio di seguito predisposto la mappa ottenuta tramite kriging ordinario corredata da un’opportuna legenda usando una griglia regolare 50×50 per discretizzare la superficie. Si rappresenti solamente la superficie delle concentrazioni all’interno dello shape file della regione di studio. Si riportino sulla mappa i punti di misura del campione. Nel caso non si sia in grado di stimare il variogramma tramite OLS si utilizzino per la previsione i valori iniziali indicati al punto 4**
+
+```{r}
+poligono <- fortify(poly)
+p=as.matrix(poligono[,c("long","lat")])
+X=bbox(poly)[1,]
+Y=bbox(poly)[2,]
+size=50
+YY<-round(seq(ceiling(min(Y)),floor(max(Y)), length=size),2)
+XX<-round(seq(ceiling(min(X)),floor(max(X)), length=size),2)
+griglia<-expand.grid(X=XX,Y=YY)
+dim(griglia)
+plot(griglia,cex=0.1)
+plot(poly,add=T)
+krg.or <- krige.conv(geodata=d2.geo, 
+                     loc=griglia,
+                     krige=krige.control(cov.pars=v.fit.ols$cov.pars,
+                                        cov.model=v.fit.ols$cov.model,
+                                        nugget=v.fit.ols$nugget),
+                     borders=p)
+#grafico
+par(cex=0.75)
+image(krg.or) 
+legend.krige(x.leg=c(2460000, 2463000), y.leg=c(4675000, 4695000), val=krg.or$predict,
+             vert=TRUE, off=0.7, scale.vals=pretty(krg.or$predict)
+)
+points(d2$x,d2$y)
+```
+
+
+## Esercizio 2
+
+Il file datpp.csv riporta dati relativi ad un point pattern realizzatosi in una regione quadrata di lato 10 e vertice basso a sinistra sull’origine degli assi cartesiani. Il file contiene due colonne: x: ascissa dell’evento y: ordinata dell’evento
+
+**1) Si rappresenti su un grafico il point pattern e la relativa finestra e lo si riporti nello spazio indicato.**
+
+```{r}
+datapp <- read.csv("datpp.csv",sep=";")
+head(datapp)
+summary(datapp)
+W <- owin(c(0,10), c(0,10))
+{plot(W, main= "Realizzazioni del point pattern")
+points(datapp)}
+```
+
+**2) Si riporti il numero di eventi del point pattern e si stimi l’intensità del processo di punto supponendo che il processo sia di Poisson omogeneo. Si interpreti il valore ottenuto.**
+
+```{r}
+area=100
+(n=nrow(datapp))
+(lambdahat=n/area)
+```
+
+Se il processo è HPP allora l’intensità è costante e pari al valore atteso diviso l’area. In questo caso ci aspettiamo in ogni quadrato di lato 1x1, 0.61 osservazioni in media. Il numero di osservazioni è proporzionale all’ampiezza dell’area considerata con costante di proporzionalità pari a 0.61. Al crescere di questa costante di proporzionalità di aspettiamo un numero di eventi maggiore per unità di area.
+
+**3) Si esegua un test per la presenza di CSR contro un’ipotesi alternativa che il processo abbia una struttura clusterizzata. SI utilizzi il metodo dei Quadrat Count usando un insieme di 25 celle ottenute suddividendo il range delle ascisse e quello delle ordinate in 5 classi. Si riporti il risultato ottenuto negli spazi predisposti e lo si interpreti. Si riporti l’istruzione R utilizzata.**
+
+```{r}
+pp <- as.ppp(datapp, W)
+qx<-quadratcount(pp,5,5)  ### griglia 5x5
+plot(qx)
+te0<-quadrat.test(pp,5, alternative="clustered"); te0
+```
+
+Dato che il pvalue associato è inferiore alle soglie critiche comunemente considerate (0.01, 0.05, 0.1), allora a questi livelli di significatività possiamo rifiutare l’ipotesi nulla di CSR andando a favore dell’ipotesi alternativa di clustering.
+
+**4) Si riporti il grafico dell’intensità stimata tramite il metodo kernel ponendo pari a 5 la finestra di lisciamento sia per i valori di ascissa che per quelli di ordinata. Si aggiungano al grafico gli eventi osservati in colore bianco. Si riporti la mappa nell’area predisposta del presente file. **
+
+```{r}
+Z <- density.ppp(pp, 5)
+{plot(Z,main="mappa dell'intensità kernel"); 
+plot(pp,add=T,cex=0.6,col="white", pch=19)}
+```
+
+**5) Tra i due metodi usati per stimare l’intensità (quello al punto 2. e quello al punto 4.) quale ritenete essere il più adeguato e perché?**
+
+Tra i due metodi utilizzati, quello con il Kernel e quello con un processo omogeneo, al fine di stimare l’intensità risulta più opportuno utilizzare uno stimatore Kernel dato che il test condotto coi Quadrat Count fa propendere per una struttura di clustering. Quindi utilizzare lo stimatore che si utilizza in caso di processo omogeneo in questa situazione non è corretto poiché porta a sostanziali distorsioni e stime non affidabili.
+
+
+
+
+
+
+
